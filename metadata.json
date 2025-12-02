@@ -1,0 +1,5 @@
+{
+  "name": "PixelZip",
+  "description": "A client-side batch image converter that transforms PNG files to JPG format and bundles them into a ZIP archive, ensuring privacy with zero server uploads.",
+  "requestFramePermissions": []
+}
