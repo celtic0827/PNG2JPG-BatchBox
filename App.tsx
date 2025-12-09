@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import JSZip from 'jszip';
 import { ImageFile, ConversionStatus, ConversionConfig } from './types';
-import { convertImageToJpg, formatBytes } from './utils/imageHelper';
+import { convertImageToJpg, formatBytes, getImageDimensions } from './utils/imageHelper';
 import Dropzone from './components/Dropzone';
 import FileItem from './components/FileItem';
-import { Settings, Download, RefreshCw, Trash2, Package, ShieldCheck, Layers, Box } from 'lucide-react';
+import { Settings, Download, RefreshCw, Trash2, Package, ShieldCheck, Layers, Box, Minimize2 } from 'lucide-react';
 
 // Robust JSZip initialization for different ESM environments
 const getZip = () => {
@@ -22,20 +22,29 @@ const App: React.FC = () => {
   const [config, setConfig] = useState<ConversionConfig>({
     quality: 0.9,
     fillColor: '#FFFFFF',
+    scale: 1, // Default 100%
   });
   const [processedCount, setProcessedCount] = useState(0);
 
   // Generate unique ID
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
-  const handleFilesAdded = useCallback((newFiles: File[]) => {
-    const newImageFiles: ImageFile[] = newFiles.map(file => ({
-      id: generateId(),
-      file,
-      previewUrl: URL.createObjectURL(file),
-      status: ConversionStatus.IDLE,
-      originalSize: file.size,
-    }));
+  const handleFilesAdded = useCallback(async (newFiles: File[]) => {
+    // Process files concurrently to get dimensions
+    const processedFilesPromises = newFiles.map(async (file) => {
+      const dimensions = await getImageDimensions(file);
+      return {
+        id: generateId(),
+        file,
+        previewUrl: URL.createObjectURL(file),
+        status: ConversionStatus.IDLE,
+        originalSize: file.size,
+        width: dimensions.width,
+        height: dimensions.height,
+      } as ImageFile;
+    });
+
+    const newImageFiles = await Promise.all(processedFilesPromises);
     setFiles(prev => [...prev, ...newImageFiles]);
   }, []);
 
@@ -197,8 +206,37 @@ const App: React.FC = () => {
                       type="range" 
                       min="10" 
                       max="100" 
+                      step="1"
                       value={config.quality * 100}
                       onChange={(e) => setConfig({...config, quality: Number(e.target.value) / 100})}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      disabled={isProcessing}
+                    />
+                  </div>
+                </div>
+
+                {/* Resize Slider */}
+                <div className="group">
+                  <div className="flex justify-between mb-3">
+                    <label className="text-xs font-bold text-cyber-dim uppercase tracking-widest flex items-center gap-2">
+                       <Minimize2 size={12} /> Resize Scale
+                    </label>
+                    <span className="text-xs font-mono text-cyber-accent bg-cyber-accent/10 px-2 py-0.5 rounded">
+                      {Math.round(config.scale * 100)}%
+                    </span>
+                  </div>
+                  <div className="relative w-full h-3 bg-cyber-black rounded-sm overflow-hidden border border-cyber-border shadow-inner">
+                    <div 
+                      className="absolute h-full bg-gradient-to-r from-cyber-accent/50 to-cyber-accent" 
+                      style={{width: `${config.scale * 100}%`}}
+                    />
+                    <input 
+                      type="range" 
+                      min="1" 
+                      max="100" 
+                      step="1"
+                      value={config.scale * 100}
+                      onChange={(e) => setConfig({...config, scale: Number(e.target.value) / 100})}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                       disabled={isProcessing}
                     />

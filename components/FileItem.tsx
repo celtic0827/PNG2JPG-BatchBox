@@ -59,7 +59,13 @@ const FileItem: React.FC<FileItemProps> = memo(({ item, onRemove }) => {
             {item.file.name}
           </h4>
         </div>
-        <div className="text-xs text-cyber-dim flex items-center gap-2 mt-1 font-mono">
+        <div className="text-xs text-cyber-dim flex items-center gap-3 mt-1 font-mono">
+          {item.width && item.height && (
+            <>
+              <span className="text-cyber-text/70">{item.width}x{item.height}px</span>
+              <span className="text-cyber-border">|</span>
+            </>
+          )}
           <span>{formatBytes(item.originalSize)}</span>
           {item.convertedSize && (
             <>
