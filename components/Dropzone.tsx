@@ -1,13 +1,19 @@
 import React, { useCallback, useState } from 'react';
-import { UploadCloud, AlertCircle, Plus } from 'lucide-react';
+import { UploadCloud, AlertCircle, Plus, FolderArchive } from 'lucide-react';
 
 interface DropzoneProps {
   onFilesAdded: (files: File[]) => void;
   disabled?: boolean;
   compact?: boolean;
+  mode?: 'image' | 'folder'; // New prop to switch modes
 }
 
-const Dropzone: React.FC<DropzoneProps> = ({ onFilesAdded, disabled, compact = false }) => {
+const Dropzone: React.FC<DropzoneProps> = ({ 
+  onFilesAdded, 
+  disabled, 
+  compact = false, 
+  mode = 'image' 
+}) => {
   const [isDragActive, setIsDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,24 +37,32 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFilesAdded, disabled, compact = f
   const validateAndAddFiles = (fileList: FileList | null) => {
     if (!fileList) return;
     
-    const validFiles: File[] = [];
-    let hasInvalid = false;
+    // Convert to array
+    const files = Array.from(fileList);
+    
+    if (mode === 'image') {
+      const validFiles: File[] = [];
+      let hasInvalid = false;
 
-    Array.from(fileList).forEach(file => {
-      if (file.type === 'image/png' || file.type === 'image/jpeg') {
-        validFiles.push(file);
-      } else {
-        hasInvalid = true;
+      files.forEach(file => {
+        if (file.type === 'image/png' || file.type === 'image/jpeg') {
+          validFiles.push(file);
+        } else {
+          hasInvalid = true;
+        }
+      });
+
+      if (hasInvalid) {
+        setError('Only PNG and JPG files are supported.');
+        setTimeout(() => setError(null), 3000);
       }
-    });
 
-    if (hasInvalid) {
-      setError('Only PNG and JPG files are supported.');
-      setTimeout(() => setError(null), 3000);
-    }
-
-    if (validFiles.length > 0) {
-      onFilesAdded(validFiles);
+      if (validFiles.length > 0) {
+        onFilesAdded(validFiles);
+      }
+    } else {
+      // Folder mode: Accept everything, validation happens in parent based on path
+      onFilesAdded(files);
     }
   };
 
@@ -59,13 +73,21 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFilesAdded, disabled, compact = f
     if (disabled) return;
     
     validateAndAddFiles(e.dataTransfer.files);
-  }, [disabled, onFilesAdded]);
+  }, [disabled, onFilesAdded, mode]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
     validateAndAddFiles(e.target.files);
     e.target.value = '';
   };
+
+  const title = mode === 'image' 
+    ? (compact ? 'ADD MORE IMAGES' : 'DROP PNG / JPG') 
+    : (compact ? 'ADD MORE FOLDERS' : 'DROP FOLDERS HERE');
+    
+  const subTitle = mode === 'image'
+    ? 'Or Click to Browse • Multiple Select'
+    : 'Drag multiple folders to auto-group';
 
   return (
     <div className="w-full">
@@ -87,7 +109,8 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFilesAdded, disabled, compact = f
         <input
           type="file"
           multiple
-          accept="image/png, image/jpeg"
+          // Add webkitdirectory for folder selection support in open dialog (Chrome/Edge/Firefox)
+          {...(mode === 'folder' ? { webkitdirectory: "", directory: "" } as any : { accept: "image/png, image/jpeg" })}
           onChange={handleFileInput}
           disabled={disabled}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
@@ -102,16 +125,16 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFilesAdded, disabled, compact = f
             {compact ? (
               <Plus size={24} strokeWidth={2} />
             ) : (
-              <UploadCloud size={48} strokeWidth={1.5} />
+              mode === 'image' ? <UploadCloud size={48} strokeWidth={1.5} /> : <FolderArchive size={48} strokeWidth={1.5} />
             )}
           </div>
           <div>
             <h3 className={`font-bold text-cyber-text tracking-wide group-hover:text-cyber-primary transition-colors ${compact ? 'text-sm' : 'text-xl'}`}>
-              {compact ? 'ADD MORE IMAGES' : 'DROP PNG / JPG'}
+              {title}
             </h3>
             {!compact && (
               <p className="text-cyber-dim mt-2 text-sm font-mono uppercase tracking-wider">
-                Or Click to Browse • Multiple Select
+                {subTitle}
               </p>
             )}
           </div>
