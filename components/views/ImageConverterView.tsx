@@ -1,10 +1,9 @@
 import React from 'react';
-import { Settings, Download, RefreshCw, Trash2, Layers, Box, Minimize2, Scissors } from 'lucide-react';
+import { Settings, Download, RefreshCw, Trash2, Layers, Box, Minimize2 } from 'lucide-react';
 import Dropzone from '../Dropzone';
 import FileItem from '../FileItem';
 import { formatBytes } from '../../utils/imageHelper';
 import { useImageConverter } from '../../hooks/useImageConverter';
-import { ConversionStatus } from '../../types';
 
 interface ImageConverterViewProps {
   controller: ReturnType<typeof useImageConverter>;
@@ -74,28 +73,6 @@ const ImageConverterView: React.FC<ImageConverterViewProps> = ({ controller }) =
                   type="range" min="1" max="100" step="1"
                   value={config.scale * 100}
                   onChange={(e) => setConfig({...config, scale: Number(e.target.value) / 100})}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  disabled={isProcessing}
-                />
-              </div>
-            </div>
-
-            {/* Trim */}
-            <div className="group">
-              <div className="flex justify-between mb-3">
-                <label className="text-xs font-bold text-cyber-dim uppercase tracking-widest flex items-center gap-2" title="Crop pixels from the right side">
-                   <Scissors size={12} /> Trim Right
-                </label>
-                <span className="text-xs font-mono text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded">
-                  {config.trimRight} px
-                </span>
-              </div>
-              <div className="relative w-full h-3 bg-cyber-black rounded-sm overflow-hidden border border-cyber-border shadow-inner">
-                <div className="absolute h-full bg-gradient-to-r from-orange-400/50 to-orange-400" style={{width: `${(config.trimRight / 50) * 100}%`}} />
-                <input 
-                  type="range" min="0" max="50" step="1"
-                  value={config.trimRight}
-                  onChange={(e) => setConfig({...config, trimRight: Number(e.target.value)})}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   disabled={isProcessing}
                 />

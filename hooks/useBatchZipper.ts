@@ -76,7 +76,7 @@ export const useBatchZipper = () => {
             type: "blob",
             compression: "DEFLATE",
             compressionOptions: { level: 6 } 
-        }, (metadata) => {
+        }, (metadata: { percent: number }) => {
             setZipTasks(prev => prev.map(t => 
                 t.id === task.id ? { ...t, progress: metadata.percent } : t
             ));

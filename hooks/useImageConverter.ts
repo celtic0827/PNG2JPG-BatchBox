@@ -10,7 +10,6 @@ export const useImageConverter = () => {
     quality: 0.9,
     fillColor: '#FFFFFF',
     scale: 1,
-    trimRight: 0,
   });
   const [processedCount, setProcessedCount] = useState(0);
 
