@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { UploadCloud, AlertCircle, Plus, FolderArchive } from 'lucide-react';
+import { UploadCloud, AlertCircle, Plus, FolderArchive, Loader2 } from 'lucide-react';
 
 interface DropzoneProps {
   onFilesAdded: (files: File[]) => void;
@@ -15,6 +15,7 @@ const Dropzone: React.FC<DropzoneProps> = ({
   mode = 'image' 
 }) => {
   const [isDragActive, setIsDragActive] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -33,6 +34,47 @@ const Dropzone: React.FC<DropzoneProps> = ({
     e.preventDefault();
     e.stopPropagation();
   }, []);
+
+  // Helper: Read all entries from a directory reader (handles pagination)
+  const readAllEntries = async (dirReader: any): Promise<any[]> => {
+    const entries: any[] = [];
+    let readResults = await new Promise<any[]>((resolve, reject) => 
+      dirReader.readEntries(resolve, reject)
+    );
+    
+    while (readResults.length > 0) {
+      entries.push(...readResults);
+      readResults = await new Promise<any[]>((resolve, reject) => 
+        dirReader.readEntries(resolve, reject)
+      );
+    }
+    return entries;
+  };
+
+  // Helper: Recursively traverse FileSystemEntry
+  const traverseFileTree = async (entry: any, path: string = ''): Promise<File[]> => {
+    if (entry.isFile) {
+      return new Promise<File[]>((resolve) => {
+        entry.file((file: File) => {
+          // Manually patch webkitRelativePath for correct grouping
+          // entry.name is the filename, path is the parent structure (e.g. "Parent/Child/")
+          const fullPath = path + entry.name;
+          Object.defineProperty(file, 'webkitRelativePath', {
+            value: fullPath,
+            writable: true
+          });
+          resolve([file]);
+        }, () => resolve([])); // Resolve empty on error
+      });
+    } else if (entry.isDirectory) {
+      const dirReader = entry.createReader();
+      const entries = await readAllEntries(dirReader);
+      const promises = entries.map(child => traverseFileTree(child, path + entry.name + '/'));
+      const results = await Promise.all(promises);
+      return results.flat();
+    }
+    return [];
+  };
 
   const validateAndAddFiles = (fileList: FileList | null) => {
     if (!fileList) return;
@@ -61,19 +103,54 @@ const Dropzone: React.FC<DropzoneProps> = ({
         onFilesAdded(validFiles);
       }
     } else {
-      // Folder mode: Accept everything, validation happens in parent based on path
+      // Folder mode via Input: Accept everything, validation happens in parent
       onFilesAdded(files);
     }
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragActive(false);
-    if (disabled) return;
+    if (disabled || isScanning) return;
+
+    // Advanced handling for Folder Mode using FileSystem API
+    if (mode === 'folder') {
+       const items = e.dataTransfer.items;
+       if (items && items.length > 0) {
+          // Check if we can use webkitGetAsEntry (Chrome/Safari/Edge/Firefox)
+          const entries = Array.from(items)
+             .map(item => typeof item.webkitGetAsEntry === 'function' ? item.webkitGetAsEntry() : null)
+             .filter(Boolean);
+
+          if (entries.length > 0) {
+             setIsScanning(true);
+             try {
+                const scanPromises = entries.map(entry => traverseFileTree(entry));
+                const results = await Promise.all(scanPromises);
+                const allFiles = results.flat();
+                
+                if (allFiles.length > 0) {
+                   onFilesAdded(allFiles);
+                } else {
+                   setError("No files found in dropped folders.");
+                   setTimeout(() => setError(null), 3000);
+                }
+             } catch (err) {
+                console.error("Scanning failed", err);
+                setError("Failed to scan directory structure.");
+                setTimeout(() => setError(null), 3000);
+             } finally {
+                setIsScanning(false);
+             }
+             return;
+          }
+       }
+    }
     
+    // Fallback standard behavior
     validateAndAddFiles(e.dataTransfer.files);
-  }, [disabled, onFilesAdded, mode]);
+  }, [disabled, onFilesAdded, mode, isScanning]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
@@ -103,7 +180,7 @@ const Dropzone: React.FC<DropzoneProps> = ({
             ? 'border-cyber-primary bg-cyber-primary/10 shadow-neon scale-[1.01]' 
             : 'border-cyber-border hover:border-cyber-primary/50 hover:bg-cyber-dark hover:shadow-lg bg-cyber-black/50'
           }
-          ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none grayscale' : ''}
+          ${(disabled || isScanning) ? 'opacity-50 cursor-not-allowed pointer-events-none grayscale' : ''}
         `}
       >
         <input
@@ -112,7 +189,7 @@ const Dropzone: React.FC<DropzoneProps> = ({
           // Add webkitdirectory for folder selection support in open dialog (Chrome/Edge/Firefox)
           {...(mode === 'folder' ? { webkitdirectory: "", directory: "" } as any : { accept: "image/png, image/jpeg" })}
           onChange={handleFileInput}
-          disabled={disabled}
+          disabled={disabled || isScanning}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
         />
         
@@ -122,7 +199,9 @@ const Dropzone: React.FC<DropzoneProps> = ({
             ${compact ? 'p-2' : 'p-4'}
             ${isDragActive ? 'bg-cyber-primary text-cyber-black' : 'bg-cyber-panel text-cyber-primary group-hover:text-cyan-300'}
           `}>
-            {compact ? (
+            {isScanning ? (
+               <Loader2 size={compact ? 24 : 48} className="animate-spin" strokeWidth={1.5} />
+            ) : compact ? (
               <Plus size={24} strokeWidth={2} />
             ) : (
               mode === 'image' ? <UploadCloud size={48} strokeWidth={1.5} /> : <FolderArchive size={48} strokeWidth={1.5} />
@@ -130,9 +209,9 @@ const Dropzone: React.FC<DropzoneProps> = ({
           </div>
           <div>
             <h3 className={`font-bold text-cyber-text tracking-wide group-hover:text-cyber-primary transition-colors ${compact ? 'text-sm' : 'text-xl'}`}>
-              {title}
+              {isScanning ? 'SCANNING FOLDERS...' : title}
             </h3>
-            {!compact && (
+            {!compact && !isScanning && (
               <p className="text-cyber-dim mt-2 text-sm font-mono uppercase tracking-wider">
                 {subTitle}
               </p>

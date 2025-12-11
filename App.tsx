@@ -174,11 +174,9 @@ const App: React.FC = () => {
       folderName,
       files: folderGroups[folderName],
       status: ConversionStatus.IDLE,
-      totalSize: folderGroups[folderName].reduce((acc, f) => acc + f.size, 0)
+      totalSize: folderGroups[folderName].reduce((acc, f) => acc + f.size, 0),
+      progress: 0
     }));
-    
-    // Optional: Handle root files if necessary, currently we focus on folders as requested
-    // If you wanted to bundle stray files into a "Root" zip, you could add logic here.
 
     setZipTasks(prev => [...prev, ...newTasks]);
   }, []);
@@ -204,43 +202,40 @@ const App: React.FC = () => {
 
     for (const task of tasksToProcess) {
       // Update status to processing
-      setZipTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: ConversionStatus.PROCESSING } : t));
+      setZipTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: ConversionStatus.PROCESSING, progress: 0 } : t));
 
       try {
         const zip = getZip();
         
-        // Add files to zip, preserving structure relative to the root folder
         task.files.forEach(file => {
-          // file.webkitRelativePath is "FolderA/sub/file.txt"
-          // We want the zip to contain "sub/file.txt" (or should it contain "FolderA/sub/..."?)
-          // Requirement: "A B C 3個目錄 會打包成 A.zip B.zip C.zip"
-          // Usually, A.zip should contain the contents of A.
-          // If we want the folder A inside the zip, we keep the full path.
-          // If we want the contents at root of zip, we strip the first part.
-          // Let's assume typical behavior: A.zip contains "file.txt", not "A/file.txt", 
-          // OR it contains "A/file.txt". 
-          // Let's go with keeping the folder structure tidy: Remove the top level name from path.
-          
           const pathParts = file.webkitRelativePath.split('/');
-          // Remove the first part (Folder Name)
           const relativePath = pathParts.slice(1).join('/');
           
           if (relativePath) {
              zip.file(relativePath, file);
           } else {
-             // Should not happen if filtered correctly, but just in case
              zip.file(file.name, file);
           }
         });
 
-        const content = await zip.generateAsync({ type: "blob" });
+        // Use onUpdate to track progress
+        const content = await zip.generateAsync({ 
+            type: "blob",
+            compression: "DEFLATE",
+            compressionOptions: { level: 6 } 
+        }, (metadata) => {
+            setZipTasks(prev => prev.map(t => 
+                t.id === task.id ? { ...t, progress: metadata.percent } : t
+            ));
+        });
         
         setZipTasks(prev => prev.map(t => 
           t.id === task.id ? { 
             ...t, 
             status: ConversionStatus.COMPLETED, 
             zipBlob: content,
-            zipSize: content.size
+            zipSize: content.size,
+            progress: 100
           } : t
         ));
 
@@ -291,7 +286,7 @@ const App: React.FC = () => {
 
       <div className="max-w-7xl mx-auto w-full p-4 md:p-8 flex flex-col gap-6 pb-32">
         
-        {/* Header */}
+        {/* Header - Updated Styling */}
         <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 border-b border-cyber-border/60 pb-8 bg-gradient-to-r from-transparent via-cyber-panel/10 to-transparent">
           <div>
             <div className="flex items-center gap-4">
@@ -300,8 +295,8 @@ const App: React.FC = () => {
                 <Package size={36} strokeWidth={1.5} className="relative z-10" />
               </div>
               <div>
-                <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tighter flex flex-col sm:block leading-none">
-                  <span className="text-cyber-dim font-mono text-xl md:text-2xl mr-2 font-normal block sm:inline mb-1 sm:mb-0">BATCH</span>
+                <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tighter flex items-center leading-none">
+                  <span className="text-white mr-2 block sm:inline mb-1 sm:mb-0">BATCH</span>
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyber-primary via-cyan-400 to-cyber-accent">
                     BOX
                   </span>
@@ -643,12 +638,26 @@ const App: React.FC = () => {
 
                               {/* Status */}
                               <div className="flex items-center gap-3">
-                                {task.status === ConversionStatus.PROCESSING && <span className="text-cyber-accent text-xs animate-pulse">ZIPPING...</span>}
+                                {task.status === ConversionStatus.PROCESSING && (
+                                  <div className="flex flex-col items-end gap-1 min-w-[100px]">
+                                     <div className="flex items-center gap-2">
+                                       <span className="text-cyber-accent text-xs animate-pulse font-mono">{Math.floor(task.progress || 0)}%</span>
+                                     </div>
+                                     <div className="w-24 h-1.5 bg-cyber-dark rounded-full overflow-hidden border border-cyber-border/50">
+                                        <div 
+                                          className="h-full bg-cyber-accent transition-all duration-300 ease-out"
+                                          style={{ width: `${task.progress || 0}%` }}
+                                        />
+                                     </div>
+                                  </div>
+                                )}
+                                
                                 {task.status === ConversionStatus.COMPLETED && (
                                   <button onClick={() => downloadOneZip(task)} className="text-emerald-400 hover:text-emerald-300 text-xs font-mono border border-emerald-500/30 px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors">
                                     DOWNLOAD
                                   </button>
                                 )}
+                                
                                 {task.status === ConversionStatus.IDLE && !isZipping && (
                                    <button onClick={() => handleRemoveZipTask(task.id)} className="text-cyber-dim hover:text-red-400 p-1.5 hover:bg-red-500/10 rounded transition-colors">
                                       <Trash2 size={16} />

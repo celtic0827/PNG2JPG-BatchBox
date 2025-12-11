@@ -1,5 +1,5 @@
 {
-  "name": "PNG2JPG BatchBox",
+  "name": "BatchBox",
   "description": "A client-side batch image converter that transforms PNG and JPG files to standardized JPG format and bundles them into a ZIP archive, ensuring privacy with zero server uploads.",
   "requestFramePermissions": []
 }

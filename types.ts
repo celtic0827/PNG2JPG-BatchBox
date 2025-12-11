@@ -26,6 +26,7 @@ export interface ZipTask {
   zipBlob?: Blob;
   totalSize: number;
   zipSize?: number;
+  progress?: number; // 0 to 100
 }
 
 export interface ConversionConfig {
