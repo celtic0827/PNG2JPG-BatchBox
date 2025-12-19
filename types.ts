@@ -1,3 +1,4 @@
+
 export enum ConversionStatus {
   IDLE = 'IDLE',
   PROCESSING = 'PROCESSING',
@@ -18,6 +19,19 @@ export interface ImageFile {
   height?: number;
 }
 
+export interface LayerImage {
+  id: string;
+  file: File;
+  previewUrl: string;
+  x: number;
+  y: number;
+  scale: number;
+  width: number;
+  height: number;
+  originalWidth: number;
+  originalHeight: number;
+}
+
 export interface ZipTask {
   id: string;
   folderName: string;
@@ -33,4 +47,10 @@ export interface ConversionConfig {
   quality: number; // 0.1 to 1.0
   fillColor: string; // Background color for transparency replacement
   scale: number; // 0.01 to 1.0 (Resize percentage)
+}
+
+export interface CropperConfig {
+  outputSize: number; // e.g., 1024
+  quality: number;
+  fillColor: string;
 }

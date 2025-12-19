@@ -1,11 +1,14 @@
+
 import React, { useState } from 'react';
-import { Package, ShieldCheck, FolderArchive, Image as ImageIcon } from 'lucide-react';
+import { Package, ShieldCheck, FolderArchive, Image as ImageIcon, Crop } from 'lucide-react';
 import { useImageConverter } from './hooks/useImageConverter';
 import { useBatchZipper } from './hooks/useBatchZipper';
+import { useLayerCropper } from './hooks/useLayerCropper';
 import ImageConverterView from './components/views/ImageConverterView';
 import BatchZipperView from './components/views/BatchZipperView';
+import LayerCropperView from './components/views/LayerCropperView';
 
-type ActiveTab = 'converter' | 'zipper';
+type ActiveTab = 'converter' | 'zipper' | 'cropper';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('converter');
@@ -13,6 +16,7 @@ const App: React.FC = () => {
   // Lift state to App level using hooks so state persists when switching tabs
   const imageConverterController = useImageConverter();
   const batchZipperController = useBatchZipper();
+  const layerCropperController = useLayerCropper();
 
   return (
     <div className="min-h-screen w-full relative">
@@ -52,7 +56,7 @@ const App: React.FC = () => {
         </header>
 
         {/* Tabs */}
-        <div className="flex gap-4 border-b border-cyber-border/30">
+        <div className="flex gap-4 border-b border-cyber-border/30 overflow-x-auto whitespace-nowrap scrollbar-hide">
           <button 
             onClick={() => setActiveTab('converter')}
             className={`pb-3 px-2 flex items-center gap-2 font-mono text-sm tracking-widest transition-all relative ${
@@ -64,6 +68,19 @@ const App: React.FC = () => {
               <span className="absolute bottom-0 left-0 w-full h-0.5 bg-cyber-primary shadow-[0_0_10px_rgba(6,182,212,0.5)]"></span>
             )}
           </button>
+          
+          <button 
+            onClick={() => setActiveTab('cropper')}
+            className={`pb-3 px-2 flex items-center gap-2 font-mono text-sm tracking-widest transition-all relative ${
+              activeTab === 'cropper' ? 'text-cyber-primary' : 'text-cyber-dim hover:text-cyber-text'
+            }`}
+          >
+            <Crop size={16} /> SQUARE CROPPER
+            {activeTab === 'cropper' && (
+              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-cyber-primary shadow-[0_0_10px_rgba(6,182,212,0.5)]"></span>
+            )}
+          </button>
+
           <button 
              onClick={() => setActiveTab('zipper')}
              className={`pb-3 px-2 flex items-center gap-2 font-mono text-sm tracking-widest transition-all relative ${
@@ -80,6 +97,10 @@ const App: React.FC = () => {
         {/* View Rendering */}
         {activeTab === 'converter' && (
           <ImageConverterView controller={imageConverterController} />
+        )}
+
+        {activeTab === 'cropper' && (
+          <LayerCropperView controller={layerCropperController} />
         )}
 
         {activeTab === 'zipper' && (

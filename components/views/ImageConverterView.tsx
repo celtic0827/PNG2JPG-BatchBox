@@ -26,8 +26,60 @@ const ImageConverterView: React.FC<ImageConverterViewProps> = ({ controller }) =
 
   return (
     <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      {/* Left Column: Settings */}
-      <div className="lg:col-span-4 space-y-6">
+      
+      {/* Left Column: Files (Moved from right) */}
+      <div className="lg:col-span-8 flex flex-col h-full min-h-[500px] order-2 lg:order-1">
+        {files.length === 0 ? (
+          <div className="h-full flex flex-col animate-in fade-in duration-500">
+            <Dropzone onFilesAdded={handleFilesAdded} disabled={isProcessing} />
+            <div className="flex-1 mt-6 flex flex-col items-center justify-center text-cyber-dim/40 border-2 border-dashed border-cyber-border/30 rounded-xl bg-cyber-black/20 p-8">
+               <div className="relative">
+                  <Layers size={80} strokeWidth={0.5} className="text-cyber-border" />
+                  <Box size={40} strokeWidth={0.5} className="absolute bottom-0 right-0 text-cyber-border bg-cyber-black" />
+               </div>
+               <p className="mt-6 font-mono text-sm tracking-[0.3em] uppercase">Container Empty</p>
+            </div>
+          </div>
+        ) : (
+          <div className="h-full flex flex-col animate-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center justify-between mb-4 px-2 border-b border-cyber-border/50 pb-3">
+              <h3 className="font-bold text-cyber-text uppercase tracking-wider text-sm flex items-center gap-3">
+                <span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyber-primary opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-cyber-primary"></span></span>
+                Image Manifest <span className="text-cyber-dim font-mono text-xs">[{files.length}]</span>
+              </h3>
+              {!isProcessing && (
+                <button onClick={handleClearAll} className="text-[10px] font-mono text-red-400 hover:text-red-300 hover:bg-red-500/10 px-3 py-1.5 rounded-sm border border-red-500/20 transition-colors flex items-center gap-2 uppercase tracking-wide">
+                  <Trash2 size={12} /> Purge All
+                </button>
+              )}
+            </div>
+            <div className="bg-cyber-panel/20 border border-cyber-border rounded-lg flex-1 overflow-hidden flex flex-col relative backdrop-blur-sm shadow-inner">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar scroll-pb-8">
+                {files.map((file) => (
+                  <FileItem key={file.id} item={file} onRemove={isProcessing ? () => {} : handleRemoveFile} />
+                ))}
+                <div className="h-8"></div>
+              </div>
+              <div className="bg-cyber-black/90 border-t border-cyber-border p-4 text-xs text-cyber-dim flex justify-between items-center backdrop-blur font-mono shadow-[0_-5px_15px_rgba(0,0,0,0.3)] z-10">
+                <div className="flex items-center gap-4">
+                  <span>STATUS: <span className={isProcessing ? "text-cyber-primary animate-pulse" : "text-emerald-500"}>{isProcessing ? 'PROCESSING...' : 'READY'}</span></span>
+                  <span className="w-px h-3 bg-cyber-border"></span>
+                  <span>COMPLETED: <span className="text-cyber-text">{stats.completed}</span></span>
+                </div>
+                {stats.totalConvertedSize > 0 && (
+                  <span className="hidden sm:inline-flex items-center gap-2 text-cyber-text/80 bg-cyber-panel/50 px-3 py-1 rounded border border-cyber-border/50">
+                    <span>NET OUTPUT:</span>
+                    <span className="text-cyber-primary font-bold">{formatBytes(stats.totalConvertedSize)}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Right Column: Settings (Moved from left) */}
+      <div className="lg:col-span-4 space-y-6 order-1 lg:order-2">
         <div className="bg-cyber-panel/40 backdrop-blur-md border border-cyber-border p-6 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-primary to-transparent opacity-50"></div>
           
@@ -135,56 +187,6 @@ const ImageConverterView: React.FC<ImageConverterViewProps> = ({ controller }) =
         {files.length > 0 && <Dropzone onFilesAdded={handleFilesAdded} disabled={isProcessing} compact={true} />}
       </div>
 
-      {/* Right Column: Files */}
-      <div className="lg:col-span-8 flex flex-col h-full min-h-[500px]">
-        {files.length === 0 ? (
-          <div className="h-full flex flex-col animate-in fade-in duration-500">
-            <Dropzone onFilesAdded={handleFilesAdded} disabled={isProcessing} />
-            <div className="flex-1 mt-6 flex flex-col items-center justify-center text-cyber-dim/40 border-2 border-dashed border-cyber-border/30 rounded-xl bg-cyber-black/20 p-8">
-               <div className="relative">
-                  <Layers size={80} strokeWidth={0.5} className="text-cyber-border" />
-                  <Box size={40} strokeWidth={0.5} className="absolute bottom-0 right-0 text-cyber-border bg-cyber-black" />
-               </div>
-               <p className="mt-6 font-mono text-sm tracking-[0.3em] uppercase">Container Empty</p>
-            </div>
-          </div>
-        ) : (
-          <div className="h-full flex flex-col animate-in slide-in-from-bottom-4 duration-300">
-            <div className="flex items-center justify-between mb-4 px-2 border-b border-cyber-border/50 pb-3">
-              <h3 className="font-bold text-cyber-text uppercase tracking-wider text-sm flex items-center gap-3">
-                <span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyber-primary opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-cyber-primary"></span></span>
-                Image Manifest <span className="text-cyber-dim font-mono text-xs">[{files.length}]</span>
-              </h3>
-              {!isProcessing && (
-                <button onClick={handleClearAll} className="text-[10px] font-mono text-red-400 hover:text-red-300 hover:bg-red-500/10 px-3 py-1.5 rounded-sm border border-red-500/20 transition-colors flex items-center gap-2 uppercase tracking-wide">
-                  <Trash2 size={12} /> Purge All
-                </button>
-              )}
-            </div>
-            <div className="bg-cyber-panel/20 border border-cyber-border rounded-lg flex-1 overflow-hidden flex flex-col relative backdrop-blur-sm shadow-inner">
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar scroll-pb-8">
-                {files.map((file) => (
-                  <FileItem key={file.id} item={file} onRemove={isProcessing ? () => {} : handleRemoveFile} />
-                ))}
-                <div className="h-8"></div>
-              </div>
-              <div className="bg-cyber-black/90 border-t border-cyber-border p-4 text-xs text-cyber-dim flex justify-between items-center backdrop-blur font-mono shadow-[0_-5px_15px_rgba(0,0,0,0.3)] z-10">
-                <div className="flex items-center gap-4">
-                  <span>STATUS: <span className={isProcessing ? "text-cyber-primary animate-pulse" : "text-emerald-500"}>{isProcessing ? 'PROCESSING...' : 'READY'}</span></span>
-                  <span className="w-px h-3 bg-cyber-border"></span>
-                  <span>COMPLETED: <span className="text-cyber-text">{stats.completed}</span></span>
-                </div>
-                {stats.totalConvertedSize > 0 && (
-                  <span className="hidden sm:inline-flex items-center gap-2 text-cyber-text/80 bg-cyber-panel/50 px-3 py-1 rounded border border-cyber-border/50">
-                    <span>NET OUTPUT:</span>
-                    <span className="text-cyber-primary font-bold">{formatBytes(stats.totalConvertedSize)}</span>
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
     </main>
   );
 };

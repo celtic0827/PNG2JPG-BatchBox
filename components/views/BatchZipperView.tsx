@@ -25,60 +25,8 @@ const BatchZipperView: React.FC<BatchZipperViewProps> = ({ controller }) => {
   return (
    <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
      
-     {/* Left Column: Actions */}
-     <div className="lg:col-span-4 space-y-6">
-       <div className="bg-cyber-panel/40 backdrop-blur-md border border-cyber-border p-6 shadow-2xl relative overflow-hidden">
-         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-accent to-transparent opacity-50"></div>
-         
-         <h2 className="text-lg font-bold text-cyber-text mb-6 flex items-center gap-3 font-mono uppercase tracking-wide">
-           <Archive size={18} className="text-cyber-accent" />
-           Zip Controls
-         </h2>
-         
-         <div className="space-y-4">
-            <div className="p-4 bg-cyber-black/50 border border-cyber-border/50 rounded text-xs text-cyber-dim leading-relaxed">
-              <strong className="text-cyber-accent block mb-2">HOW IT WORKS:</strong>
-              Drag multiple folders into the dropzone. Each top-level folder will be compressed into its own standalone ZIP file.
-            </div>
-
-            <button
-              onClick={startBatchZipping}
-              disabled={isZipping || zipTasks.length === 0 || stats.completed === zipTasks.length}
-              className={`
-                w-full py-4 px-4 relative group overflow-hidden transition-all
-                ${isZipping || zipTasks.length === 0 || stats.completed === zipTasks.length
-                  ? 'bg-cyber-dark border border-cyber-border cursor-not-allowed opacity-50' 
-                  : 'bg-cyber-accent/10 hover:bg-cyber-accent/20 border border-cyber-accent text-cyber-accent hover:shadow-[0_0_20px_rgba(217,70,239,0.2)]'
-                }
-              `}
-            >
-              <div className="absolute inset-0 w-1 bg-cyber-accent transition-all duration-300 group-hover:w-full opacity-10"></div>
-              <div className="flex items-center justify-center gap-3 font-bold uppercase tracking-widest relative z-10">
-                {isZipping ? <RefreshCw className="animate-spin" size={18} /> : <FolderArchive size={18} />}
-                <span className="text-sm">{isZipping ? `Compressing...` : 'Zip All Folders'}</span>
-              </div>
-            </button>
-
-            {stats.completed > 0 && (
-              <button
-                onClick={downloadAllZips}
-                className="w-full py-4 px-4 relative overflow-hidden group bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 transition-all hover:shadow-[0_0_20px_rgba(52,211,153,0.2)]"
-              >
-                 <div className="absolute inset-0 w-1 bg-emerald-500 transition-all duration-300 group-hover:w-full opacity-10"></div>
-                <div className="flex items-center justify-center gap-3 font-bold uppercase tracking-widest relative z-10">
-                  <Download size={18} />
-                  <span className="text-sm">Download All ({stats.completed})</span>
-                </div>
-              </button>
-            )}
-         </div>
-       </div>
-
-       {zipTasks.length > 0 && <Dropzone onFilesAdded={handleFoldersAdded} disabled={isZipping} compact={true} mode="folder" />}
-     </div>
-
-     {/* Right Column: Folder List */}
-     <div className="lg:col-span-8 flex flex-col h-full min-h-[500px]">
+     {/* Left Column: Folder List (Moved from right) */}
+     <div className="lg:col-span-8 flex flex-col h-full min-h-[500px] order-2 lg:order-1">
         {zipTasks.length === 0 ? (
            <div className="h-full flex flex-col animate-in fade-in duration-500">
             <Dropzone onFilesAdded={handleFoldersAdded} disabled={isZipping} mode="folder" />
@@ -162,6 +110,58 @@ const BatchZipperView: React.FC<BatchZipperViewProps> = ({ controller }) => {
             </div>
           </div>
         )}
+     </div>
+
+     {/* Right Column: Actions (Moved from left) */}
+     <div className="lg:col-span-4 space-y-6 order-1 lg:order-2">
+       <div className="bg-cyber-panel/40 backdrop-blur-md border border-cyber-border p-6 shadow-2xl relative overflow-hidden">
+         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-accent to-transparent opacity-50"></div>
+         
+         <h2 className="text-lg font-bold text-cyber-text mb-6 flex items-center gap-3 font-mono uppercase tracking-wide">
+           <Archive size={18} className="text-cyber-accent" />
+           Zip Controls
+         </h2>
+         
+         <div className="space-y-4">
+            <div className="p-4 bg-cyber-black/50 border border-cyber-border/50 rounded text-xs text-cyber-dim leading-relaxed">
+              <strong className="text-cyber-accent block mb-2">HOW IT WORKS:</strong>
+              Drag multiple folders into the dropzone. Each top-level folder will be compressed into its own standalone ZIP file.
+            </div>
+
+            <button
+              onClick={startBatchZipping}
+              disabled={isZipping || zipTasks.length === 0 || stats.completed === zipTasks.length}
+              className={`
+                w-full py-4 px-4 relative group overflow-hidden transition-all
+                ${isZipping || zipTasks.length === 0 || stats.completed === zipTasks.length
+                  ? 'bg-cyber-dark border border-cyber-border cursor-not-allowed opacity-50' 
+                  : 'bg-cyber-accent/10 hover:bg-cyber-accent/20 border border-cyber-accent text-cyber-accent hover:shadow-[0_0_20px_rgba(217,70,239,0.2)]'
+                }
+              `}
+            >
+              <div className="absolute inset-0 w-1 bg-cyber-accent transition-all duration-300 group-hover:w-full opacity-10"></div>
+              <div className="flex items-center justify-center gap-3 font-bold uppercase tracking-widest relative z-10">
+                {isZipping ? <RefreshCw className="animate-spin" size={18} /> : <FolderArchive size={18} />}
+                <span className="text-sm">{isZipping ? `Compressing...` : 'Zip All Folders'}</span>
+              </div>
+            </button>
+
+            {stats.completed > 0 && (
+              <button
+                onClick={downloadAllZips}
+                className="w-full py-4 px-4 relative overflow-hidden group bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 transition-all hover:shadow-[0_0_20px_rgba(52,211,153,0.2)]"
+              >
+                 <div className="absolute inset-0 w-1 bg-emerald-500 transition-all duration-300 group-hover:w-full opacity-10"></div>
+                <div className="flex items-center justify-center gap-3 font-bold uppercase tracking-widest relative z-10">
+                  <Download size={18} />
+                  <span className="text-sm">Download All ({stats.completed})</span>
+                </div>
+              </button>
+            )}
+         </div>
+       </div>
+
+       {zipTasks.length > 0 && <Dropzone onFilesAdded={handleFoldersAdded} disabled={isZipping} compact={true} mode="folder" />}
      </div>
 
    </main>
