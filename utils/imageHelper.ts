@@ -1,3 +1,4 @@
+
 import { ConversionConfig } from '../types';
 
 /**
@@ -8,11 +9,6 @@ export const getImageDimensions = (file: File): Promise<{width: number, height: 
     const img = new Image();
     img.onload = () => {
       resolve({ width: img.width, height: img.height });
-      // Clean up object URL immediately after reading dimensions
-      // Note: We don't revoke here if we plan to use the same object URL for preview, 
-      // but in this specific implementation, App.tsx creates a separate preview URL.
-      // So checking implementation in App.tsx: it creates previewUrl using createObjectURL(file).
-      // Here we create a temporary one just for dimensions.
       URL.revokeObjectURL(img.src);
     };
     img.onerror = () => {
@@ -24,8 +20,6 @@ export const getImageDimensions = (file: File): Promise<{width: number, height: 
 
 /**
  * Converts an image file (PNG, JPG, etc.) to a JPG Blob.
- * Handles transparency by filling the background with a specified color.
- * Handles resizing based on config.scale.
  */
 export const convertImageToJpg = async (
   file: File,
@@ -38,12 +32,10 @@ export const convertImageToJpg = async (
       const img = new Image();
       
       img.onload = () => {
-        // Calculate new dimensions
         const scale = config.scale || 1;
         const targetWidth = Math.max(1, Math.floor(img.width * scale));
         const targetHeight = Math.max(1, Math.floor(img.height * scale));
 
-        // Create canvas
         const canvas = document.createElement('canvas');
         canvas.width = targetWidth;
         canvas.height = targetHeight;
@@ -54,17 +46,13 @@ export const convertImageToJpg = async (
           return;
         }
 
-        // Fill background (handle transparency)
         ctx.fillStyle = config.fillColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Draw image with new dimensions
-        // quality indicates "smoothing" in some browsers, but mainly handled by toBlob type
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
         
-        // Export to blob
         canvas.toBlob(
           (blob) => {
             if (blob) {
@@ -79,13 +67,58 @@ export const convertImageToJpg = async (
       };
       
       img.onerror = () => reject(new Error('Failed to load image'));
-      // Using result from FileReader is safer for local file handling than createObjectURL in some contexts,
-      // but createObjectURL is generally faster. We use result here for compatibility.
       img.src = e.target?.result as string;
     };
     
     reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsDataURL(file);
+  });
+};
+
+/**
+ * Applies a Curves Lookup Table (LUT) to an image file.
+ */
+export const applyCurvesToImage = async (
+  file: File,
+  lut: number[],
+  quality: number = 0.9
+): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        reject(new Error('Canvas error'));
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0);
+      
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      // Apply LUT to RGB channels
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = lut[data[i]];     // R
+        data[i + 1] = lut[data[i + 1]]; // G
+        data[i + 2] = lut[data[i + 2]]; // B
+        // Alpha (i+3) remains unchanged
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Encoding failed'));
+      }, 'image/jpeg', quality); // Default output to JPG
+    };
+    
+    img.onerror = (err) => reject(err);
+    img.src = URL.createObjectURL(file);
   });
 };
 

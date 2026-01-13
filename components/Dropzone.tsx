@@ -57,7 +57,6 @@ const Dropzone: React.FC<DropzoneProps> = ({
       return new Promise<File[]>((resolve) => {
         entry.file((file: File) => {
           // Manually patch webkitRelativePath for correct grouping
-          // entry.name is the filename, path is the parent structure (e.g. "Parent/Child/")
           const fullPath = path + entry.name;
           Object.defineProperty(file, 'webkitRelativePath', {
             value: fullPath,
@@ -79,7 +78,6 @@ const Dropzone: React.FC<DropzoneProps> = ({
   const validateAndAddFiles = (fileList: FileList | null) => {
     if (!fileList) return;
     
-    // Convert to array
     const files = Array.from(fileList);
     
     if (mode === 'image') {
@@ -103,7 +101,6 @@ const Dropzone: React.FC<DropzoneProps> = ({
         onFilesAdded(validFiles);
       }
     } else {
-      // Folder mode via Input: Accept everything, validation happens in parent
       onFilesAdded(files);
     }
   };
@@ -114,11 +111,9 @@ const Dropzone: React.FC<DropzoneProps> = ({
     setIsDragActive(false);
     if (disabled || isScanning) return;
 
-    // Advanced handling for Folder Mode using FileSystem API
     if (mode === 'folder') {
        const items = e.dataTransfer.items;
        if (items && items.length > 0) {
-          // Check if we can use webkitGetAsEntry (Chrome/Safari/Edge/Firefox)
           const entries = Array.from(items)
              .map(item => typeof (item as any).webkitGetAsEntry === 'function' ? (item as any).webkitGetAsEntry() : null)
              .filter(Boolean);
@@ -148,7 +143,6 @@ const Dropzone: React.FC<DropzoneProps> = ({
        }
     }
     
-    // Fallback standard behavior
     validateAndAddFiles(e.dataTransfer.files);
   }, [disabled, onFilesAdded, mode, isScanning]);
 
@@ -159,23 +153,23 @@ const Dropzone: React.FC<DropzoneProps> = ({
   };
 
   const title = mode === 'image' 
-    ? (compact ? 'ADD MORE IMAGES' : 'DROP PNG / JPG') 
-    : (compact ? 'ADD MORE FOLDERS' : 'DROP FOLDERS HERE');
+    ? (compact ? 'ADD' : 'DROP PNG / JPG') 
+    : (compact ? 'ADD' : 'DROP FOLDERS HERE');
     
   const subTitle = mode === 'image'
-    ? 'Or Click to Browse • Multiple Select'
-    : 'Drag multiple folders to auto-group';
+    ? 'Or Click to Browse'
+    : 'Drag multiple folders';
 
   return (
-    <div className="w-full">
+    <div className={`w-full h-full ${compact ? 'flex items-center justify-center' : ''}`}>
       <div
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          relative border-2 border-dashed rounded-xl transition-all duration-300 ease-in-out text-center cursor-pointer group
-          ${compact ? 'p-4' : 'p-10'}
+          relative border-2 border-dashed rounded-xl transition-all duration-300 ease-in-out text-center cursor-pointer group w-full h-full flex flex-col items-center justify-center
+          ${compact ? 'p-1' : 'p-10'}
           ${isDragActive 
             ? 'border-cyber-primary bg-cyber-primary/10 shadow-neon scale-[1.01]' 
             : 'border-cyber-border hover:border-cyber-primary/50 hover:bg-cyber-dark hover:shadow-lg bg-cyber-black/50'
@@ -186,30 +180,29 @@ const Dropzone: React.FC<DropzoneProps> = ({
         <input
           type="file"
           multiple
-          // Add webkitdirectory for folder selection support in open dialog (Chrome/Edge/Firefox)
           {...(mode === 'folder' ? { webkitdirectory: "", directory: "" } as any : { accept: "image/png, image/jpeg" })}
           onChange={handleFileInput}
           disabled={disabled || isScanning}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
         />
         
-        <div className={`flex flex-col items-center justify-center pointer-events-none ${compact ? 'gap-2' : 'space-y-4'}`}>
+        <div className={`flex flex-col items-center justify-center pointer-events-none ${compact ? 'gap-1' : 'space-y-4'}`}>
           <div className={`
             rounded-full transition-colors duration-300 flex items-center justify-center
-            ${compact ? 'p-2' : 'p-4'}
+            ${compact ? 'p-1.5' : 'p-4'}
             ${isDragActive ? 'bg-cyber-primary text-cyber-black' : 'bg-cyber-panel text-cyber-primary group-hover:text-cyan-300'}
           `}>
             {isScanning ? (
-               <Loader2 size={compact ? 24 : 48} className="animate-spin" strokeWidth={1.5} />
+               <Loader2 size={compact ? 16 : 48} className="animate-spin" strokeWidth={1.5} />
             ) : compact ? (
-              <Plus size={24} strokeWidth={2} />
+              <Plus size={16} strokeWidth={2.5} />
             ) : (
               mode === 'image' ? <UploadCloud size={48} strokeWidth={1.5} /> : <FolderArchive size={48} strokeWidth={1.5} />
             )}
           </div>
           <div>
-            <h3 className={`font-bold text-cyber-text tracking-wide group-hover:text-cyber-primary transition-colors ${compact ? 'text-sm' : 'text-xl'}`}>
-              {isScanning ? 'SCANNING FOLDERS...' : title}
+            <h3 className={`font-bold text-cyber-text tracking-wide group-hover:text-cyber-primary transition-colors ${compact ? 'text-[10px]' : 'text-xl'}`}>
+              {isScanning ? 'SCAN' : title}
             </h3>
             {!compact && !isScanning && (
               <p className="text-cyber-dim mt-2 text-sm font-mono uppercase tracking-wider">

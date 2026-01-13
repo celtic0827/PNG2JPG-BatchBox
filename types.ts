@@ -54,3 +54,14 @@ export interface CropperConfig {
   quality: number;
   fillColor: string;
 }
+
+export interface CurvePoint {
+  id: string;
+  x: number; // 0-255
+  y: number; // 0-255
+}
+
+export interface CurvesConfig {
+  points: CurvePoint[];
+  channel: 'RGB' | 'R' | 'G' | 'B'; // Future proofing, currently focusing on Master (RGB)
+}
