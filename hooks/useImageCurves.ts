@@ -5,6 +5,7 @@ import { generateCurveLUT } from '../utils/curveAlgorithms';
 import { generateId, getZip } from '../utils/common';
 
 const STORAGE_KEY = 'batchbox_curve_points';
+const COLOR_STORAGE_KEY = 'batchbox_color_tuning';
 
 const DEFAULT_POINTS: CurvePoint[] = [
   { id: 'start', x: 0, y: 0 },
@@ -20,36 +21,41 @@ export interface ReferenceImage {
 export const useImageCurves = () => {
   const [files, setFiles] = useState<ImageFile[]>([]);
   
-  // Initialize points from local storage or defaults
+  // Initialize points from local storage
   const [points, setPoints] = useState<CurvePoint[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length >= 2) {
-          return parsed;
-        }
+        if (Array.isArray(parsed) && parsed.length >= 2) return parsed;
       }
-    } catch (e) {
-      console.warn("Failed to load curve points from localStorage:", e);
-    }
+    } catch (e) {}
     return DEFAULT_POINTS;
+  });
+
+  // Color Tuning State (-100 to 100)
+  const [colorTuning, setColorTuning] = useState<{ temperature: number, tint: number }>(() => {
+    try {
+      const saved = localStorage.getItem(COLOR_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return { temperature: 0, tint: 0 };
   });
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [activePreviewId, setActivePreviewId] = useState<string | null>(null);
-  
-  // AB Comparison State
   const [referenceImage, setReferenceImage] = useState<ReferenceImage | null>(null);
   const [isABMode, setIsABMode] = useState(true); 
   const [splitPosition, setSplitPosition] = useState(50); 
 
-  // Persist points to local storage whenever they change
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(points));
   }, [points]);
 
-  // Computed LUT based on points
+  useEffect(() => {
+    localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(colorTuning));
+  }, [colorTuning]);
+
   const lut = useMemo(() => generateCurveLUT(points), [points]);
 
   const handleFilesAdded = useCallback(async (newFiles: File[]) => {
@@ -69,43 +75,29 @@ export const useImageCurves = () => {
     const newImageFiles = await Promise.all(processedFilesPromises);
     setFiles(prev => {
         const updated = [...prev, ...newImageFiles];
-        if (!activePreviewId && updated.length > 0) {
-            setActivePreviewId(updated[0].id);
-        }
+        if (!activePreviewId && updated.length > 0) setActivePreviewId(updated[0].id);
         return updated;
     });
   }, [activePreviewId]);
 
   const handleReferenceAdded = useCallback(async (file: File) => {
-    if (referenceImage) {
-      URL.revokeObjectURL(referenceImage.previewUrl);
-    }
+    if (referenceImage) URL.revokeObjectURL(referenceImage.previewUrl);
     const previewUrl = URL.createObjectURL(file);
-    setReferenceImage({
-      id: generateId(),
-      file,
-      previewUrl
-    });
+    setReferenceImage({ id: generateId(), file, previewUrl });
     setIsABMode(true);
   }, [referenceImage]);
 
   const clearReference = useCallback(() => {
-    if (referenceImage) {
-      URL.revokeObjectURL(referenceImage.previewUrl);
-    }
+    if (referenceImage) URL.revokeObjectURL(referenceImage.previewUrl);
     setReferenceImage(null);
   }, [referenceImage]);
 
   const handleRemoveFile = useCallback((id: string) => {
     setFiles(prev => {
       const target = prev.find(f => f.id === id);
-      if (target) {
-        URL.revokeObjectURL(target.previewUrl);
-      }
+      if (target) URL.revokeObjectURL(target.previewUrl);
       const remaining = prev.filter(f => f.id !== id);
-      if (activePreviewId === id) {
-          setActivePreviewId(remaining.length > 0 ? remaining[0].id : null);
-      }
+      if (activePreviewId === id) setActivePreviewId(remaining.length > 0 ? remaining[0].id : null);
       return remaining;
     });
   }, [activePreviewId]);
@@ -129,6 +121,7 @@ export const useImageCurves = () => {
   };
 
   const resetCurves = () => setPoints(DEFAULT_POINTS);
+  const resetColorTuning = () => setColorTuning({ temperature: 0, tint: 0 });
 
   const applyBatch = async () => {
     setIsProcessing(true);
@@ -136,7 +129,7 @@ export const useImageCurves = () => {
         if (file.status === ConversionStatus.COMPLETED) continue;
         setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: ConversionStatus.PROCESSING } : f));
         try {
-            const blob = await applyCurvesToImage(file.file, lut);
+            const blob = await applyCurvesToImage(file.file, lut, 0.9, colorTuning);
             setFiles(prev => prev.map(f => 
                 f.id === file.id ? { 
                     ...f, 
@@ -159,29 +152,28 @@ export const useImageCurves = () => {
         const completedFiles = files.filter(f => f.status === ConversionStatus.COMPLETED && f.convertedBlob);
         if (completedFiles.length === 0) return;
         completedFiles.forEach(f => {
-          const fileName = f.file.name.replace(/\.(png|jpe?g)$/i, '') + '_curve.jpg';
-          if (f.convertedBlob) {
-            zip.file(fileName, f.convertedBlob);
-          }
+          const fileName = f.file.name.replace(/\.(png|jpe?g)$/i, '') + '_processed.jpg';
+          if (f.convertedBlob) zip.file(fileName, f.convertedBlob);
         });
         const content = await zip.generateAsync({ type: "blob" });
         const url = URL.createObjectURL(content);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `BatchBox_Curves_${new Date().toISOString().slice(0,10)}.zip`;
+        a.download = `BatchBox_Processed_${new Date().toISOString().slice(0,10)}.zip`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       } catch (error) {
         console.error("ZIP generation failed", error);
-        alert("Failed to generate ZIP.");
       }
   };
 
   return {
       files,
       points,
+      colorTuning,
+      setColorTuning,
       isProcessing,
       activePreviewId,
       setActivePreviewId,
@@ -191,6 +183,7 @@ export const useImageCurves = () => {
       updatePoint,
       removePoint,
       resetCurves,
+      resetColorTuning,
       applyBatch,
       downloadZip,
       lut,

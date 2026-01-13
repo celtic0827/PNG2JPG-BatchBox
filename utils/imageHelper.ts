@@ -1,4 +1,3 @@
-
 import { ConversionConfig } from '../types';
 
 /**
@@ -76,12 +75,13 @@ export const convertImageToJpg = async (
 };
 
 /**
- * Applies a Curves Lookup Table (LUT) to an image file.
+ * Applies a Curves Lookup Table (LUT) and optional color tuning to an image file.
  */
 export const applyCurvesToImage = async (
   file: File,
   lut: number[],
-  quality: number = 0.9
+  quality: number = 0.9,
+  colorTuning?: { temperature: number; tint: number }
 ): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -101,11 +101,36 @@ export const applyCurvesToImage = async (
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
 
-      // Apply LUT to RGB channels
+      // Color tuning pre-calculations
+      let rShift = 0;
+      let bShift = 0;
+      let gShift = 0;
+
+      if (colorTuning) {
+        const { temperature, tint } = colorTuning;
+        // Temperature: -100 (Cool/Blue) to +100 (Warm/Amber)
+        if (temperature > 0) {
+          rShift = temperature * 0.4;
+          bShift = -temperature * 0.4;
+        } else {
+          bShift = -temperature * 0.4;
+          rShift = temperature * 0.4;
+        }
+
+        // Tint: -100 (Magenta) to +100 (Green)
+        gShift = tint * 0.4;
+      }
+
+      const clamp = (val: number) => Math.max(0, Math.min(255, Math.round(val)));
+
+      // Apply color tuning then curve LUT
       for (let i = 0; i < data.length; i += 4) {
-        data[i] = lut[data[i]];     // R
-        data[i + 1] = lut[data[i + 1]]; // G
-        data[i + 2] = lut[data[i + 2]]; // B
+        // Red
+        data[i] = lut[clamp(data[i] + rShift)];
+        // Green
+        data[i + 1] = lut[clamp(data[i + 1] + gShift)];
+        // Blue
+        data[i + 2] = lut[clamp(data[i + 2] + bShift)];
         // Alpha (i+3) remains unchanged
       }
 
@@ -114,7 +139,7 @@ export const applyCurvesToImage = async (
       canvas.toBlob((blob) => {
         if (blob) resolve(blob);
         else reject(new Error('Encoding failed'));
-      }, 'image/jpeg', quality); // Default output to JPG
+      }, 'image/jpeg', quality);
     };
     
     img.onerror = (err) => reject(err);

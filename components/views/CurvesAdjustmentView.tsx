@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useImageCurves } from '../../hooks/useImageCurves';
-import { Activity, Download, RefreshCw, Trash2, RotateCcw, Image as ImageIcon, Plus, XCircle, Split, MousePointer2 } from 'lucide-react';
+import { Activity, Download, RefreshCw, Trash2, RotateCcw, Image as ImageIcon, XCircle, Split, MousePointer2, Thermometer, Palette } from 'lucide-react';
 import Dropzone from '../Dropzone';
 import { applyCurvesToImage } from '../../utils/imageHelper';
 import { ConversionStatus } from '../../types';
@@ -13,6 +13,8 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
   const {
     files,
     points,
+    colorTuning,
+    setColorTuning,
     isProcessing,
     activePreviewId,
     setActivePreviewId,
@@ -22,10 +24,10 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
     updatePoint,
     removePoint,
     resetCurves,
+    resetColorTuning,
     applyBatch,
     downloadZip,
     lut,
-    // AB Mode
     referenceImage,
     handleReferenceAdded,
     clearReference,
@@ -43,7 +45,6 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
 
   const completedCount = files.filter(f => f.status === ConversionStatus.COMPLETED).length;
 
-  // Generate preview whenever LUT or active file changes
   useEffect(() => {
     const activeFile = files.find(f => f.id === activePreviewId);
     if (!activeFile) {
@@ -53,7 +54,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
 
     const timer = setTimeout(async () => {
         try {
-            const blob = await applyCurvesToImage(activeFile.file, lut);
+            const blob = await applyCurvesToImage(activeFile.file, lut, 0.9, colorTuning);
             const url = URL.createObjectURL(blob);
             setPreviewBlobUrl(prev => {
                 if (prev) URL.revokeObjectURL(prev);
@@ -65,7 +66,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
     }, 40);
 
     return () => clearTimeout(timer);
-  }, [activePreviewId, lut, files]); 
+  }, [activePreviewId, lut, files, colorTuning]); 
 
   const handleGraphClick = (e: React.MouseEvent) => {
     if (draggingPointId) return;
@@ -126,7 +127,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
   const activeFileItem = files.find(f => f.id === activePreviewId);
 
   return (
-    <main className="max-h-[800px] grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden">
+    <main className="max-h-[850px] grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden">
       
       {/* Left Strip: Vertical Thumbnail Sidebar */}
       <div className="lg:col-span-1 hidden lg:flex flex-col bg-cyber-black border border-cyber-border overflow-hidden">
@@ -161,7 +162,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
         </div>
       </div>
 
-      {/* Center Section: Header + Main Preview Area */}
+      {/* Center Section: Main Preview Area + Color Tuning at Bottom */}
       <div className="lg:col-span-7 flex flex-col h-full bg-cyber-dark/95 border border-cyber-border rounded-none overflow-hidden">
         {files.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center p-12">
@@ -172,7 +173,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
           </div>
         ) : (
           <>
-            {/* Header / Toolbar */}
+            {/* Top Toolbar */}
             <div className="bg-cyber-black border-b border-cyber-border px-4 py-2 flex items-center justify-between z-20 shrink-0">
               <div className="flex items-center gap-3">
                 <button 
@@ -195,24 +196,19 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
                     {referenceImage ? 'Change Ref' : 'Upload Ref'}
                     <input type="file" className="hidden" accept="image/*" onChange={handleReferenceInputChange} />
                   </label>
-                  
                   {referenceImage && (
-                    <button 
-                      onClick={clearReference}
-                      className="text-red-400 hover:text-red-300 p-1"
-                      title="Clear Reference"
-                    >
+                    <button onClick={clearReference} className="text-red-400 hover:text-red-300 p-1">
                       <XCircle size={12} />
                     </button>
                   )}
                 </div>
               </div>
               <div className="text-[10px] font-mono text-cyber-dim uppercase">
-                {isABMode ? (referenceImage ? 'Reference vs Adjusted' : 'Original vs Adjusted') : 'Visualizing Results'}
+                {isABMode ? (referenceImage ? 'Ref vs Adj' : 'Orig vs Adj') : 'Preview'}
               </div>
             </div>
 
-            {/* Main Preview Area */}
+            {/* Preview Image Area */}
             <div 
               ref={previewContainerRef}
               className="flex-1 relative overflow-hidden flex items-center justify-center bg-cyber-black select-none"
@@ -220,16 +216,12 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
                 {activeFileItem ? (
                     <div className="relative w-full h-full flex flex-col items-center justify-center p-4">
                         <div className="relative border border-cyber-border/50 max-h-full max-w-full overflow-hidden group/preview">
-                            
-                            {/* Adjusted Version */}
                             <img 
                                 src={previewBlobUrl || activeFileItem.previewUrl} 
                                 className="max-w-full block"
-                                style={{ maxHeight: 'calc(800px - 150px)', objectFit: 'contain' }}
+                                style={{ maxHeight: 'calc(800px - 320px)', objectFit: 'contain' }}
                                 alt="Adjusted" 
                             />
-
-                            {/* AB Split */}
                             {isABMode && (
                               <>
                                 <div 
@@ -256,31 +248,85 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
                                   style={{ left: `calc(${splitPosition}% - 0.5px)` }}
                                   onMouseDown={(e) => { e.preventDefault(); setIsResizingSplit(true); }}
                                 >
-                                   <div className="w-6 h-6 bg-cyber-primary text-cyber-black rounded-none flex items-center justify-center border border-cyber-black">
+                                   <div className="w-6 h-6 bg-cyber-primary text-cyber-black flex items-center justify-center border border-cyber-black">
                                       <Split size={10} className="rotate-90" />
                                    </div>
                                 </div>
                               </>
                             )}
                         </div>
-                        
-                        <div className="mt-2 text-[10px] font-mono text-cyber-dim bg-cyber-black px-2 py-1 border border-cyber-border">
-                             {activeFileItem.file.name.toUpperCase()} ({activeFileItem.width}x{activeFileItem.height})
+                        <div className="mt-2 text-[9px] font-mono text-cyber-dim bg-cyber-black px-2 py-0.5 border border-cyber-border uppercase">
+                             {activeFileItem.file.name} [{activeFileItem.width}x{activeFileItem.height}]
                         </div>
                     </div>
                 ) : (
-                    <div className="text-cyber-dim font-mono text-xs">Select target from manifest</div>
+                    <div className="text-cyber-dim font-mono text-xs italic">Select an image to preview results</div>
                 )}
+            </div>
+
+            {/* NEW: Color Tuning Panel - Moved here for better height management */}
+            <div className="bg-cyber-black/40 border-t border-cyber-border p-4 shrink-0">
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-[10px] font-bold text-cyber-text flex items-center gap-2 font-mono uppercase tracking-widest">
+                        <Palette size={12} className="text-cyber-primary" />
+                        Color Tuning
+                    </h2>
+                    <button onClick={resetColorTuning} className="text-[8px] font-mono text-cyber-dim hover:text-cyber-primary px-2 border border-cyber-border bg-cyber-black">
+                       RESET COLORS
+                    </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Temperature Slider */}
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-[9px] font-mono text-cyber-dim uppercase">
+                            <span className="flex items-center gap-1"><Thermometer size={10} /> Temp</span>
+                            <span className={colorTuning.temperature > 0 ? 'text-orange-400' : colorTuning.temperature < 0 ? 'text-blue-400' : ''}>
+                                {colorTuning.temperature > 0 ? '+' : ''}{colorTuning.temperature}
+                            </span>
+                        </div>
+                        <div className="relative h-4 bg-gradient-to-r from-blue-600 via-cyber-black to-orange-600 border border-cyber-border rounded-none overflow-hidden">
+                            <input 
+                                type="range" min="-100" max="100" step="1"
+                                value={colorTuning.temperature}
+                                onChange={(e) => setColorTuning(prev => ({ ...prev, temperature: parseInt(e.target.value) }))}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
+                            <div className="absolute top-0 bottom-0 w-0.5 bg-white shadow-sm" style={{ left: `${((colorTuning.temperature + 100) / 200) * 100}%` }} />
+                        </div>
+                    </div>
+
+                    {/* Tint Slider */}
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-[9px] font-mono text-cyber-dim uppercase">
+                            <span className="flex items-center gap-1"><Palette size={10} /> Tint</span>
+                            <span className={colorTuning.tint > 0 ? 'text-green-400' : colorTuning.tint < 0 ? 'text-fuchsia-400' : ''}>
+                                {colorTuning.tint > 0 ? '+' : ''}{colorTuning.tint}
+                            </span>
+                        </div>
+                        <div className="relative h-4 bg-gradient-to-r from-fuchsia-600 via-cyber-black to-green-600 border border-cyber-border rounded-none overflow-hidden">
+                            <input 
+                                type="range" min="-100" max="100" step="1"
+                                value={colorTuning.tint}
+                                onChange={(e) => setColorTuning(prev => ({ ...prev, tint: parseInt(e.target.value) }))}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
+                            <div className="absolute top-0 bottom-0 w-0.5 bg-white shadow-sm" style={{ left: `${((colorTuning.tint + 100) / 200) * 100}%` }} />
+                        </div>
+                    </div>
+                </div>
             </div>
           </>
         )}
       </div>
 
-      {/* Right Column: Curve Editor */}
-      <div className="lg:col-span-4 flex flex-col gap-4 overflow-hidden h-full">
-        <div className="bg-cyber-panel border border-cyber-border p-5 flex flex-col overflow-hidden">
+      {/* Right Column: Master Curve + Actions */}
+      <div className="lg:col-span-4 flex flex-col gap-4 overflow-y-auto h-full custom-scrollbar pr-1">
+        
+        {/* Curve Editor */}
+        <div className="bg-cyber-panel border border-cyber-border p-4 flex flex-col shrink-0">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-bold text-cyber-text flex items-center gap-2 font-mono uppercase tracking-widest">
+                <h2 className="text-[11px] font-bold text-cyber-text flex items-center gap-2 font-mono uppercase tracking-widest">
                     <Activity size={14} className="text-cyber-primary" />
                     Master Curve
                 </h2>
@@ -311,16 +357,15 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
                     ></div>
                 ))}
             </div>
-
-            <div className="mt-3 flex items-center justify-between text-[9px] text-cyber-dim font-mono uppercase">
-                <span>0-255 RGB Map</span>
-                <span>Drag to map</span>
+            <div className="mt-2 text-[9px] text-cyber-dim font-mono uppercase text-right">
+                <MousePointer2 size={10} className="inline mr-1" /> Double-click point to delete
             </div>
         </div>
 
-        <div className="bg-cyber-black/40 border border-cyber-border p-4 flex flex-col gap-3 shrink-0">
+        {/* Action Panel */}
+        <div className="bg-cyber-black/40 border border-cyber-border p-4 flex flex-col gap-3 shrink-0 mb-4">
              <div className="flex justify-between text-[10px] font-mono text-cyber-dim uppercase">
-                 <span>Batch Queue</span>
+                 <span>Queue Status</span>
                  <span className="text-cyber-text">{files.length} ITEMS</span>
              </div>
 
