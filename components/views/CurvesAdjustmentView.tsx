@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useImageCurves } from '../../hooks/useImageCurves';
-import { Activity, Download, RefreshCw, Trash2, RotateCcw, Image as ImageIcon, XCircle, Split, MousePointer2, Thermometer, Palette } from 'lucide-react';
+import { Activity, Download, RefreshCw, Trash2, RotateCcw, Image as ImageIcon, XCircle, Split, MousePointer2, Thermometer, Palette, Save, Bookmark, Zap } from 'lucide-react';
 import Dropzone from '../Dropzone';
 import { applyCurvesToImage } from '../../utils/imageHelper';
 import { ConversionStatus } from '../../types';
@@ -15,11 +15,16 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
     points,
     colorTuning,
     setColorTuning,
+    presets,
+    savePreset,
+    loadPreset,
+    deletePreset,
     isProcessing,
     activePreviewId,
     setActivePreviewId,
     handleFilesAdded,
     handleRemoveFile,
+    handleClearAll,
     addPoint,
     updatePoint,
     removePoint,
@@ -42,6 +47,8 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
   const [draggingPointId, setDraggingPointId] = useState<string | null>(null);
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [isResizingSplit, setIsResizingSplit] = useState(false);
+  const [newPresetName, setNewPresetName] = useState('');
+  const [showSaveInput, setShowSaveInput] = useState(false);
 
   const completedCount = files.filter(f => f.status === ConversionStatus.COMPLETED).length;
 
@@ -124,15 +131,31 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
     e.target.value = '';
   };
 
+  const handleSavePreset = () => {
+    if (!newPresetName.trim()) return;
+    savePreset(newPresetName.trim());
+    setNewPresetName('');
+    setShowSaveInput(false);
+  };
+
   const activeFileItem = files.find(f => f.id === activePreviewId);
 
   return (
     <main className="h-[660px] max-h-[660px] grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden">
       
-      {/* Left Strip: Vertical Thumbnail Sidebar - Height Aligned */}
+      {/* Left Strip: Vertical Thumbnail Sidebar */}
       <div className="lg:col-span-1 hidden lg:flex flex-col bg-cyber-black border border-cyber-border overflow-hidden rounded-sm h-full">
-        <div className="p-1.5 border-b border-cyber-border bg-cyber-dark text-[9px] font-mono text-cyber-dim uppercase text-center tracking-tighter shrink-0">
-          Manifest
+        <div className="p-1.5 border-b border-cyber-border bg-cyber-dark text-[9px] font-mono text-cyber-dim uppercase text-center tracking-tighter shrink-0 flex items-center justify-between">
+          <span className="flex-1">Manifest</span>
+          {files.length > 0 && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); handleClearAll(); }}
+              className="text-red-400 hover:text-red-300 transition-colors p-0.5 ml-1"
+              title="Clear All"
+            >
+              <Trash2 size={10} />
+            </button>
+          )}
         </div>
         <div className="flex-1 overflow-y-auto p-1 space-y-1.5 custom-scrollbar">
           {files.map(file => (
@@ -325,7 +348,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
         )}
       </div>
 
-      {/* Right Column: Master Curve + Actions - Aligned Height */}
+      {/* Right Column: Master Curve + Presets + Actions */}
       <div className="lg:col-span-4 flex flex-col gap-3 h-full overflow-hidden">
         
         {/* Curve Editor */}
@@ -348,7 +371,6 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
                     {[...Array(16)].map((_, i) => <div key={i} className="border border-cyber-dim"></div>)}
                 </div>
                 <svg className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible">
-                    {/* Reference Diagonal Line */}
                     <line x1="0" y1="100%" x2="100%" y2="0" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
                     <path d={generateSvgPath()} fill="none" stroke="#06b6d4" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
                 </svg>
@@ -367,6 +389,65 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
             <div className="mt-1.5 text-[7px] text-cyber-dim/50 font-mono uppercase text-center tracking-tighter">
                 <MousePointer2 size={7} className="inline mr-1" /> Click to add • Double-click to remove
             </div>
+        </div>
+
+        {/* Memory Presets Panel */}
+        <div className="bg-cyber-black/40 border border-cyber-border p-2.5 flex flex-col shrink-0 rounded-sm">
+          <div className="flex items-center justify-between mb-2 border-b border-cyber-border/20 pb-1">
+              <h2 className="text-[9px] font-bold text-cyber-text flex items-center gap-1.5 font-mono uppercase tracking-[0.2em]">
+                  <Bookmark size={9} className="text-cyber-accent" />
+                  Memory Bank
+              </h2>
+              <button 
+                onClick={() => setShowSaveInput(!showSaveInput)}
+                className={`text-[7px] font-mono px-1.5 py-0.5 border transition-all flex items-center gap-1 ${
+                  showSaveInput ? 'bg-cyber-accent border-cyber-accent text-cyber-black' : 'border-cyber-border text-cyber-dim hover:text-cyber-accent hover:border-cyber-accent'
+                }`}
+              >
+                <Save size={8} /> SAVE NEW
+              </button>
+          </div>
+
+          {showSaveInput && (
+            <div className="mb-2 animate-in slide-in-from-top-1 duration-200">
+               <div className="flex items-center gap-1">
+                  <input 
+                    autoFocus
+                    type="text" 
+                    value={newPresetName}
+                    onChange={(e) => setNewPresetName(e.target.value)}
+                    placeholder="Preset label..."
+                    className="flex-1 bg-cyber-dark border border-cyber-border text-[9px] font-mono p-1 text-cyber-text outline-none focus:border-cyber-accent"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSavePreset()}
+                  />
+                  <button onClick={handleSavePreset} className="bg-cyber-accent text-cyber-black p-1 hover:brightness-110">
+                     <Zap size={10} />
+                  </button>
+               </div>
+            </div>
+          )}
+
+          <div className="max-h-[120px] overflow-y-auto custom-scrollbar space-y-1">
+            {presets.length === 0 ? (
+              <div className="py-2 text-center text-[7px] font-mono text-cyber-dim/40 uppercase tracking-widest italic">No memory data</div>
+            ) : (
+              presets.map(preset => (
+                <div key={preset.id} className="group flex items-center justify-between bg-cyber-dark/50 border border-cyber-border/50 p-1.5 hover:border-cyber-accent/40 transition-colors">
+                  <button 
+                    onClick={() => loadPreset(preset.id)}
+                    className="flex-1 text-left text-[9px] font-mono text-cyber-dim group-hover:text-cyber-text truncate pr-2 uppercase"
+                  >
+                    {preset.name}
+                  </button>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => deletePreset(preset.id)} className="text-red-400 hover:text-red-300 p-0.5">
+                      <Trash2 size={9} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Action Panel */}

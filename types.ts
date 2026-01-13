@@ -1,4 +1,3 @@
-
 export enum ConversionStatus {
   IDLE = 'IDLE',
   PROCESSING = 'PROCESSING',
@@ -59,6 +58,17 @@ export interface CurvePoint {
   id: string;
   x: number; // 0-255
   y: number; // 0-255
+}
+
+export interface CurvePreset {
+  id: string;
+  name: string;
+  points: CurvePoint[];
+  colorTuning: {
+    temperature: number;
+    tint: number;
+  };
+  timestamp: number;
 }
 
 export interface CurvesConfig {

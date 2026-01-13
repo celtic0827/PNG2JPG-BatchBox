@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { ImageFile, ConversionStatus, CurvePoint } from '../types';
+import { ImageFile, ConversionStatus, CurvePoint, CurvePreset } from '../types';
 import { applyCurvesToImage, getImageDimensions } from '../utils/imageHelper';
 import { generateCurveLUT } from '../utils/curveAlgorithms';
 import { generateId, getZip } from '../utils/common';
 
 const STORAGE_KEY = 'batchbox_curve_points';
 const COLOR_STORAGE_KEY = 'batchbox_color_tuning';
+const PRESETS_STORAGE_KEY = 'batchbox_curve_presets';
 
 const DEFAULT_POINTS: CurvePoint[] = [
   { id: 'start', x: 0, y: 0 },
@@ -42,6 +43,15 @@ export const useImageCurves = () => {
     return { temperature: 0, tint: 0 };
   });
 
+  // Presets State
+  const [presets, setPresets] = useState<CurvePreset[]>(() => {
+    try {
+      const saved = localStorage.getItem(PRESETS_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [];
+  });
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [activePreviewId, setActivePreviewId] = useState<string | null>(null);
   const [referenceImage, setReferenceImage] = useState<ReferenceImage | null>(null);
@@ -55,6 +65,10 @@ export const useImageCurves = () => {
   useEffect(() => {
     localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(colorTuning));
   }, [colorTuning]);
+
+  useEffect(() => {
+    localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(presets));
+  }, [presets]);
 
   const lut = useMemo(() => generateCurveLUT(points), [points]);
 
@@ -102,6 +116,12 @@ export const useImageCurves = () => {
     });
   }, [activePreviewId]);
 
+  const handleClearAll = useCallback(() => {
+    files.forEach(f => URL.revokeObjectURL(f.previewUrl));
+    setFiles([]);
+    setActivePreviewId(null);
+  }, [files]);
+
   const addPoint = (x: number, y: number) => {
     if (points.some(p => Math.abs(p.x - x) < 5)) return;
     const newPoint: CurvePoint = { id: generateId(), x, y };
@@ -122,6 +142,30 @@ export const useImageCurves = () => {
 
   const resetCurves = () => setPoints(DEFAULT_POINTS);
   const resetColorTuning = () => setColorTuning({ temperature: 0, tint: 0 });
+
+  // Preset Management
+  const savePreset = (name: string) => {
+    const newPreset: CurvePreset = {
+      id: generateId(),
+      name,
+      points: [...points],
+      colorTuning: { ...colorTuning },
+      timestamp: Date.now()
+    };
+    setPresets(prev => [newPreset, ...prev]);
+  };
+
+  const loadPreset = (presetId: string) => {
+    const preset = presets.find(p => p.id === presetId);
+    if (preset) {
+      setPoints(preset.points);
+      setColorTuning(preset.colorTuning);
+    }
+  };
+
+  const deletePreset = (presetId: string) => {
+    setPresets(prev => prev.filter(p => p.id !== presetId));
+  };
 
   const applyBatch = async () => {
     setIsProcessing(true);
@@ -174,11 +218,16 @@ export const useImageCurves = () => {
       points,
       colorTuning,
       setColorTuning,
+      presets,
+      savePreset,
+      loadPreset,
+      deletePreset,
       isProcessing,
       activePreviewId,
       setActivePreviewId,
       handleFilesAdded,
       handleRemoveFile,
+      handleClearAll,
       addPoint,
       updatePoint,
       removePoint,
