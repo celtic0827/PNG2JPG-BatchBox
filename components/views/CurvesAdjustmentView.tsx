@@ -127,14 +127,14 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
   const activeFileItem = files.find(f => f.id === activePreviewId);
 
   return (
-    <main className="max-h-[850px] grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden">
+    <main className="h-[660px] max-h-[660px] grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden">
       
       {/* Left Strip: Vertical Thumbnail Sidebar */}
-      <div className="lg:col-span-1 hidden lg:flex flex-col bg-cyber-black border border-cyber-border overflow-hidden">
-        <div className="p-2 border-b border-cyber-border bg-cyber-dark text-[10px] font-mono text-cyber-dim uppercase text-center tracking-tighter">
+      <div className="lg:col-span-1 hidden lg:flex flex-col bg-cyber-black border border-cyber-border overflow-hidden rounded-sm">
+        <div className="p-1.5 border-b border-cyber-border bg-cyber-dark text-[9px] font-mono text-cyber-dim uppercase text-center tracking-tighter">
           Manifest
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-1 space-y-1.5 custom-scrollbar">
           {files.map(file => (
             <div 
               key={file.id} 
@@ -150,7 +150,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
               )}
               <button 
                 onClick={(e) => { e.stopPropagation(); handleRemoveFile(file.id); }}
-                className="absolute top-0 right-0 bg-red-600 text-white p-1 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                className="absolute top-0 right-0 bg-red-600 text-white p-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity"
               >
                 <Trash2 size={8} />
               </button>
@@ -163,69 +163,69 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
       </div>
 
       {/* Center Section: Main Preview Area + Color Tuning at Bottom */}
-      <div className="lg:col-span-7 flex flex-col h-full bg-cyber-dark/95 border border-cyber-border rounded-none overflow-hidden">
+      <div className="lg:col-span-7 flex flex-col h-full bg-cyber-dark/95 border border-cyber-border rounded-sm overflow-hidden shadow-2xl">
         {files.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-12">
-             <div className="w-full max-w-md">
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+             <div className="w-full max-w-sm mb-4">
                 <Dropzone onFilesAdded={handleFilesAdded} />
              </div>
-             <p className="mt-6 font-mono text-sm tracking-[0.3em] uppercase text-cyber-dim/40">Drop base images</p>
+             <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-cyber-dim/40">Drop images to begin calibration</p>
           </div>
         ) : (
           <>
             {/* Top Toolbar */}
-            <div className="bg-cyber-black border-b border-cyber-border px-4 py-2 flex items-center justify-between z-20 shrink-0">
-              <div className="flex items-center gap-3">
+            <div className="bg-cyber-black border-b border-cyber-border px-3 py-1 flex items-center justify-between z-20 shrink-0">
+              <div className="flex items-center gap-2">
                 <button 
                   onClick={() => setIsABMode(!isABMode)}
-                  className={`flex items-center gap-2 px-2 py-1 rounded text-[10px] font-mono uppercase tracking-wider transition-all border ${
+                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[8px] font-mono uppercase tracking-wider transition-all border ${
                     isABMode 
                     ? 'bg-cyber-primary/10 border-cyber-primary text-cyber-primary' 
                     : 'bg-cyber-panel border-cyber-border text-cyber-dim hover:text-cyber-text'
                   }`}
                 >
-                  <Split size={12} />
+                  <Split size={9} />
                   {isABMode ? 'AB On' : 'AB Off'}
                 </button>
 
-                <div className="h-4 w-px bg-cyber-border/50"></div>
+                <div className="h-3 w-px bg-cyber-border/50"></div>
 
-                <div className="flex items-center gap-2">
-                  <label className="cursor-pointer bg-cyber-panel border border-cyber-border px-2 py-1 rounded text-[10px] font-mono text-cyber-dim hover:text-cyber-text transition-all flex items-center gap-2 hover:border-cyber-primary">
-                    <ImageIcon size={12} />
-                    {referenceImage ? 'Change Ref' : 'Upload Ref'}
+                <div className="flex items-center gap-1.5">
+                  <label className="cursor-pointer bg-cyber-panel border border-cyber-border px-1.5 py-0.5 rounded-sm text-[8px] font-mono text-cyber-dim hover:text-cyber-text transition-all flex items-center gap-1 hover:border-cyber-primary">
+                    <ImageIcon size={9} />
+                    {referenceImage ? 'Swap' : 'Ref'}
                     <input type="file" className="hidden" accept="image/*" onChange={handleReferenceInputChange} />
                   </label>
                   {referenceImage && (
-                    <button onClick={clearReference} className="text-red-400 hover:text-red-300 p-1">
-                      <XCircle size={12} />
+                    <button onClick={clearReference} className="text-red-400 hover:text-red-300 p-0.5">
+                      <XCircle size={9} />
                     </button>
                   )}
                 </div>
               </div>
-              <div className="text-[10px] font-mono text-cyber-dim uppercase">
-                {isABMode ? (referenceImage ? 'Ref vs Adj' : 'Orig vs Adj') : 'Preview'}
+              <div className="text-[8px] font-mono text-cyber-dim uppercase tracking-widest">
+                {isABMode ? 'Comp Mode' : 'View Mode'}
               </div>
             </div>
 
-            {/* Preview Image Area */}
+            {/* Preview Image Area - Reduced height by ~15% (540px -> 460px) */}
             <div 
               ref={previewContainerRef}
               className="flex-1 relative overflow-hidden flex items-center justify-center bg-cyber-black select-none"
             >
                 {activeFileItem ? (
-                    <div className="relative w-full h-full flex flex-col items-center justify-center p-4">
-                        <div className="relative border border-cyber-border/50 max-h-full max-w-full overflow-hidden group/preview">
+                    <div className="relative w-full h-full flex flex-col items-center justify-center p-1.5">
+                        <div className="relative border border-cyber-border/30 max-h-full max-w-full overflow-hidden group/preview bg-cyber-black">
                             <img 
                                 src={previewBlobUrl || activeFileItem.previewUrl} 
                                 className="max-w-full block"
-                                style={{ maxHeight: 'calc(800px - 320px)', objectFit: 'contain' }}
+                                style={{ maxHeight: '460px', objectFit: 'contain' }}
                                 alt="Adjusted" 
                             />
                             {isABMode && (
                               <>
                                 <div 
-                                  className="absolute top-0 left-0 h-full overflow-hidden border-r border-cyber-primary z-10 pointer-events-none"
+                                  className="absolute top-0 left-0 h-full overflow-hidden border-r border-cyber-primary/80 z-10 pointer-events-none shadow-[1px_0_8px_rgba(0,0,0,0.5)]"
                                   style={{ width: `${splitPosition}%` }}
                                 >
                                   <img 
@@ -244,74 +244,74 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
                                   />
                                 </div>
                                 <div 
-                                  className="absolute top-0 bottom-0 z-20 w-[1px] bg-cyber-primary cursor-col-resize group/handle flex items-center justify-center"
-                                  style={{ left: `calc(${splitPosition}% - 0.5px)` }}
+                                  className="absolute top-0 bottom-0 z-20 w-[1.5px] bg-cyber-primary cursor-col-resize group/handle flex items-center justify-center hover:bg-white transition-colors"
+                                  style={{ left: `calc(${splitPosition}% - 0.75px)` }}
                                   onMouseDown={(e) => { e.preventDefault(); setIsResizingSplit(true); }}
                                 >
-                                   <div className="w-6 h-6 bg-cyber-primary text-cyber-black flex items-center justify-center border border-cyber-black">
-                                      <Split size={10} className="rotate-90" />
+                                   <div className="w-4 h-4 bg-cyber-primary text-cyber-black flex items-center justify-center border border-cyber-black shadow-lg rounded-full">
+                                      <Split size={8} className="rotate-90" />
                                    </div>
                                 </div>
                               </>
                             )}
                         </div>
-                        <div className="mt-2 text-[9px] font-mono text-cyber-dim bg-cyber-black px-2 py-0.5 border border-cyber-border uppercase">
-                             {activeFileItem.file.name} [{activeFileItem.width}x{activeFileItem.height}]
+                        <div className="mt-1 text-[7px] font-mono text-cyber-dim/60 bg-cyber-black px-1.5 py-0.5 border border-cyber-border/20 uppercase tracking-tighter">
+                             {activeFileItem.file.name} • {activeFileItem.width}x{activeFileItem.height}
                         </div>
                     </div>
                 ) : (
-                    <div className="text-cyber-dim font-mono text-xs italic">Select an image to preview results</div>
+                    <div className="text-cyber-dim font-mono text-[9px] animate-pulse uppercase tracking-[0.2em]">Select manifest source</div>
                 )}
             </div>
 
-            {/* NEW: Color Tuning Panel - Moved here for better height management */}
-            <div className="bg-cyber-black/40 border-t border-cyber-border p-4 shrink-0">
-                <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-[10px] font-bold text-cyber-text flex items-center gap-2 font-mono uppercase tracking-widest">
-                        <Palette size={12} className="text-cyber-primary" />
-                        Color Tuning
+            {/* Color Tuning Panel - Reduced height by tightening spacing */}
+            <div className="bg-cyber-black/60 border-t border-cyber-border p-2.5 shrink-0 backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-1.5">
+                    <h2 className="text-[8px] font-bold text-cyber-text flex items-center gap-1.5 font-mono uppercase tracking-[0.2em]">
+                        <Palette size={9} className="text-cyber-primary" />
+                        Color Balance
                     </h2>
-                    <button onClick={resetColorTuning} className="text-[8px] font-mono text-cyber-dim hover:text-cyber-primary px-2 border border-cyber-border bg-cyber-black">
-                       RESET COLORS
+                    <button onClick={resetColorTuning} className="text-[7px] font-mono text-cyber-dim hover:text-cyber-primary px-1 border border-cyber-border bg-cyber-black transition-colors">
+                       RESET
                     </button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-3">
                     {/* Temperature Slider */}
-                    <div className="space-y-1">
-                        <div className="flex justify-between text-[9px] font-mono text-cyber-dim uppercase">
-                            <span className="flex items-center gap-1"><Thermometer size={10} /> Temp</span>
-                            <span className={colorTuning.temperature > 0 ? 'text-orange-400' : colorTuning.temperature < 0 ? 'text-blue-400' : ''}>
+                    <div className="space-y-0.5">
+                        <div className="flex justify-between text-[7px] font-mono text-cyber-dim/80 uppercase">
+                            <span className="flex items-center gap-1"><Thermometer size={7} /> Temperature</span>
+                            <span className={`font-bold ${colorTuning.temperature > 0 ? 'text-orange-400' : colorTuning.temperature < 0 ? 'text-blue-400' : ''}`}>
                                 {colorTuning.temperature > 0 ? '+' : ''}{colorTuning.temperature}
                             </span>
                         </div>
-                        <div className="relative h-4 bg-gradient-to-r from-blue-600 via-cyber-black to-orange-600 border border-cyber-border rounded-none overflow-hidden">
+                        <div className="relative h-2.5 bg-gradient-to-r from-blue-700 via-cyber-black to-orange-700 border border-cyber-border/40 rounded-none overflow-hidden group/slider">
                             <input 
                                 type="range" min="-100" max="100" step="1"
                                 value={colorTuning.temperature}
                                 onChange={(e) => setColorTuning(prev => ({ ...prev, temperature: parseInt(e.target.value) }))}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             />
-                            <div className="absolute top-0 bottom-0 w-0.5 bg-white shadow-sm" style={{ left: `${((colorTuning.temperature + 100) / 200) * 100}%` }} />
+                            <div className="absolute top-0 bottom-0 w-[1px] bg-white shadow-[0_0_5px_white] z-0" style={{ left: `${((colorTuning.temperature + 100) / 200) * 100}%` }} />
                         </div>
                     </div>
 
                     {/* Tint Slider */}
-                    <div className="space-y-1">
-                        <div className="flex justify-between text-[9px] font-mono text-cyber-dim uppercase">
-                            <span className="flex items-center gap-1"><Palette size={10} /> Tint</span>
-                            <span className={colorTuning.tint > 0 ? 'text-green-400' : colorTuning.tint < 0 ? 'text-fuchsia-400' : ''}>
+                    <div className="space-y-0.5">
+                        <div className="flex justify-between text-[7px] font-mono text-cyber-dim/80 uppercase">
+                            <span className="flex items-center gap-1"><Palette size={7} /> Tint Offset</span>
+                            <span className={`font-bold ${colorTuning.tint > 0 ? 'text-green-400' : colorTuning.tint < 0 ? 'text-fuchsia-400' : ''}`}>
                                 {colorTuning.tint > 0 ? '+' : ''}{colorTuning.tint}
                             </span>
                         </div>
-                        <div className="relative h-4 bg-gradient-to-r from-fuchsia-600 via-cyber-black to-green-600 border border-cyber-border rounded-none overflow-hidden">
+                        <div className="relative h-2.5 bg-gradient-to-r from-fuchsia-700 via-cyber-black to-green-700 border border-cyber-border/40 rounded-none overflow-hidden group/slider">
                             <input 
                                 type="range" min="-100" max="100" step="1"
                                 value={colorTuning.tint}
                                 onChange={(e) => setColorTuning(prev => ({ ...prev, tint: parseInt(e.target.value) }))}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             />
-                            <div className="absolute top-0 bottom-0 w-0.5 bg-white shadow-sm" style={{ left: `${((colorTuning.tint + 100) / 200) * 100}%` }} />
+                            <div className="absolute top-0 bottom-0 w-[1px] bg-white shadow-[0_0_5px_white] z-0" style={{ left: `${((colorTuning.tint + 100) / 200) * 100}%` }} />
                         </div>
                     </div>
                 </div>
@@ -321,35 +321,35 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
       </div>
 
       {/* Right Column: Master Curve + Actions */}
-      <div className="lg:col-span-4 flex flex-col gap-4 overflow-y-auto h-full custom-scrollbar pr-1">
+      <div className="lg:col-span-4 flex flex-col gap-3 h-full overflow-hidden">
         
         {/* Curve Editor */}
-        <div className="bg-cyber-panel border border-cyber-border p-4 flex flex-col shrink-0">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[11px] font-bold text-cyber-text flex items-center gap-2 font-mono uppercase tracking-widest">
-                    <Activity size={14} className="text-cyber-primary" />
-                    Master Curve
+        <div className="bg-cyber-panel border border-cyber-border p-2.5 flex flex-col shrink-0 rounded-sm shadow-xl">
+            <div className="flex items-center justify-between mb-2">
+                <h2 className="text-[9px] font-bold text-cyber-text flex items-center gap-1.5 font-mono uppercase tracking-[0.2em]">
+                    <Activity size={10} className="text-cyber-primary" />
+                    Tonal Curve
                 </h2>
                 <button 
                     onClick={resetCurves}
-                    className="text-[9px] font-mono text-cyber-dim hover:text-cyber-primary transition-colors border border-cyber-border px-2 py-0.5 bg-cyber-black"
+                    className="text-[7px] font-mono text-cyber-dim hover:text-cyber-primary transition-colors border border-cyber-border px-1 py-0.5 bg-cyber-black"
                 >
-                    <RotateCcw size={10} className="inline mr-1" /> RESET
+                    <RotateCcw size={8} className="inline mr-1" /> RESET
                 </button>
             </div>
 
-            <div className="aspect-square relative bg-cyber-black border border-cyber-border select-none cursor-crosshair overflow-hidden shrink-0" ref={graphRef} onClick={handleGraphClick}>
-                <div className="absolute inset-0 grid grid-cols-4 grid-rows-4 pointer-events-none opacity-5">
+            <div className="aspect-square relative bg-cyber-black border border-cyber-border/80 select-none cursor-crosshair overflow-hidden shrink-0 shadow-inner" ref={graphRef} onClick={handleGraphClick}>
+                <div className="absolute inset-0 grid grid-cols-4 grid-rows-4 pointer-events-none opacity-[0.03]">
                     {[...Array(16)].map((_, i) => <div key={i} className="border border-cyber-dim"></div>)}
                 </div>
                 <svg className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible">
-                    <path d={generateSvgPath()} fill="none" stroke="#06b6d4" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                    <path d={generateSvgPath()} fill="none" stroke="#06b6d4" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
                 </svg>
                 {points.map((p, index) => (
                     <div
                         key={p.id}
-                        className={`absolute w-3 h-3 -ml-1.5 -mt-1.5 border cursor-grab active:cursor-grabbing z-20 ${
-                            draggingPointId === p.id ? 'bg-cyber-text border-cyber-primary' : 'bg-cyber-black border-cyber-primary hover:bg-cyber-primary'
+                        className={`absolute w-2 h-2 -ml-1 -mt-1 border rounded-full cursor-grab active:cursor-grabbing z-20 transition-transform hover:scale-125 ${
+                            draggingPointId === p.id ? 'bg-white border-cyber-primary shadow-[0_0_6px_white]' : 'bg-cyber-black border-cyber-primary hover:bg-cyber-primary shadow-md'
                         }`}
                         style={{ left: `${(p.x / 255) * 100}%`, top: `${100 - (p.y / 255) * 100}%` }}
                         onMouseDown={(e) => { e.stopPropagation(); setDraggingPointId(p.id); }}
@@ -357,36 +357,45 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
                     ></div>
                 ))}
             </div>
-            <div className="mt-2 text-[9px] text-cyber-dim font-mono uppercase text-right">
-                <MousePointer2 size={10} className="inline mr-1" /> Double-click point to delete
+            <div className="mt-1.5 text-[7px] text-cyber-dim/50 font-mono uppercase text-center tracking-tighter">
+                <MousePointer2 size={7} className="inline mr-1" /> Click to add • Double-click to remove
             </div>
         </div>
 
         {/* Action Panel */}
-        <div className="bg-cyber-black/40 border border-cyber-border p-4 flex flex-col gap-3 shrink-0 mb-4">
-             <div className="flex justify-between text-[10px] font-mono text-cyber-dim uppercase">
-                 <span>Queue Status</span>
-                 <span className="text-cyber-text">{files.length} ITEMS</span>
+        <div className="bg-cyber-black/40 border border-cyber-border p-3 flex flex-col gap-2 shrink-0 rounded-sm">
+             <div className="flex justify-between text-[8px] font-mono text-cyber-dim uppercase tracking-widest border-b border-cyber-border/20 pb-1.5">
+                 <span>Processor</span>
+                 <span className="text-cyber-text font-bold">{files.length} ITEMS</span>
              </div>
 
              <button
                 onClick={applyBatch}
                 disabled={isProcessing || files.length === 0}
-                className="w-full py-2.5 bg-cyber-primary/5 border border-cyber-primary text-cyber-primary font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-cyber-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-full py-2 bg-cyber-primary/5 border border-cyber-primary text-cyber-primary font-bold text-[9px] uppercase tracking-[0.2em] hover:bg-cyber-primary/20 transition-all flex items-center justify-center gap-1.5 disabled:opacity-20 disabled:cursor-not-allowed group shadow-lg"
              >
-                {isProcessing ? <RefreshCw size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-                {isProcessing ? 'PROCESSING' : 'APPLY BATCH'}
+                {isProcessing ? <RefreshCw size={10} className="animate-spin" /> : <RefreshCw size={10} className="group-hover:rotate-180 transition-transform duration-500" />}
+                {isProcessing ? 'CALIBRATING...' : 'EXECUTE'}
              </button>
              
              {completedCount > 0 && !isProcessing && (
                 <button
                     onClick={downloadZip}
-                    className="w-full py-2.5 bg-cyber-accent/5 border border-cyber-accent text-cyber-accent font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-cyber-accent/20 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2 bg-cyber-accent/5 border border-cyber-accent text-cyber-accent font-bold text-[9px] uppercase tracking-[0.2em] hover:bg-cyber-accent/20 transition-all flex items-center justify-center gap-1.5 animate-in fade-in slide-in-from-top-1 duration-300 shadow-lg"
                 >
-                    <Download size={12} />
+                    <Download size={10} />
                     EXPORT ZIP ({completedCount})
                 </button>
              )}
+        </div>
+
+        {/* Status Indicator */}
+        <div className="flex-1 bg-cyber-dark/20 border border-cyber-border/20 p-1.5 rounded-sm flex flex-col justify-center items-center gap-1 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
+             <div className="text-[6px] font-mono uppercase tracking-[0.4em] text-cyber-dim">Local Buffer</div>
+             <div className="text-[8px] font-mono text-emerald-500 flex items-center gap-1">
+                <div className="w-0.5 h-0.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                ENCRYPTED ACTIVE
+             </div>
         </div>
       </div>
     </main>
