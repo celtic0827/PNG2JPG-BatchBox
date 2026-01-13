@@ -129,9 +129,9 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
   return (
     <main className="h-[660px] max-h-[660px] grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden">
       
-      {/* Left Strip: Vertical Thumbnail Sidebar */}
-      <div className="lg:col-span-1 hidden lg:flex flex-col bg-cyber-black border border-cyber-border overflow-hidden rounded-sm">
-        <div className="p-1.5 border-b border-cyber-border bg-cyber-dark text-[9px] font-mono text-cyber-dim uppercase text-center tracking-tighter">
+      {/* Left Strip: Vertical Thumbnail Sidebar - Height Aligned */}
+      <div className="lg:col-span-1 hidden lg:flex flex-col bg-cyber-black border border-cyber-border overflow-hidden rounded-sm h-full">
+        <div className="p-1.5 border-b border-cyber-border bg-cyber-dark text-[9px] font-mono text-cyber-dim uppercase text-center tracking-tighter shrink-0">
           Manifest
         </div>
         <div className="flex-1 overflow-y-auto p-1 space-y-1.5 custom-scrollbar">
@@ -156,7 +156,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
               </button>
             </div>
           ))}
-          <div className="w-full aspect-square">
+          <div className="w-full aspect-square flex-shrink-0">
             <Dropzone onFilesAdded={handleFilesAdded} compact={true} />
           </div>
         </div>
@@ -165,11 +165,16 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
       {/* Center Section: Main Preview Area + Color Tuning at Bottom */}
       <div className="lg:col-span-7 flex flex-col h-full bg-cyber-dark/95 border border-cyber-border rounded-sm overflow-hidden shadow-2xl">
         {files.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-             <div className="w-full max-w-sm mb-4">
-                <Dropzone onFilesAdded={handleFilesAdded} />
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-cyber-black/20">
+             <div className="w-full max-w-lg flex flex-col items-center gap-6">
+                <div className="w-full h-[320px]">
+                  <Dropzone onFilesAdded={handleFilesAdded} />
+                </div>
+                <div>
+                   <h3 className="text-cyber-text font-mono text-sm tracking-widest uppercase mb-1">Signal Awaiting Calibration</h3>
+                   <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-cyber-dim/60">Drop base imagery to initialize tonal processor</p>
+                </div>
              </div>
-             <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-cyber-dim/40">Drop images to begin calibration</p>
           </div>
         ) : (
           <>
@@ -208,7 +213,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
               </div>
             </div>
 
-            {/* Preview Image Area - Reduced height by ~15% (540px -> 460px) */}
+            {/* Preview Image Area */}
             <div 
               ref={previewContainerRef}
               className="flex-1 relative overflow-hidden flex items-center justify-center bg-cyber-black select-none"
@@ -264,7 +269,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
                 )}
             </div>
 
-            {/* Color Tuning Panel - Reduced height by tightening spacing */}
+            {/* Color Tuning Panel */}
             <div className="bg-cyber-black/60 border-t border-cyber-border p-2.5 shrink-0 backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-1.5">
                     <h2 className="text-[8px] font-bold text-cyber-text flex items-center gap-1.5 font-mono uppercase tracking-[0.2em]">
@@ -320,7 +325,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
         )}
       </div>
 
-      {/* Right Column: Master Curve + Actions */}
+      {/* Right Column: Master Curve + Actions - Aligned Height */}
       <div className="lg:col-span-4 flex flex-col gap-3 h-full overflow-hidden">
         
         {/* Curve Editor */}
@@ -343,6 +348,8 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
                     {[...Array(16)].map((_, i) => <div key={i} className="border border-cyber-dim"></div>)}
                 </div>
                 <svg className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible">
+                    {/* Reference Diagonal Line */}
+                    <line x1="0" y1="100%" x2="100%" y2="0" stroke="rgba(100, 116, 139, 0.4)" strokeWidth="1" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
                     <path d={generateSvgPath()} fill="none" stroke="#06b6d4" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
                 </svg>
                 {points.map((p, index) => (
