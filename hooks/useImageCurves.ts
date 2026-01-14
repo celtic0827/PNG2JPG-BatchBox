@@ -196,7 +196,7 @@ export const useImageCurves = () => {
         const completedFiles = files.filter(f => f.status === ConversionStatus.COMPLETED && f.convertedBlob);
         if (completedFiles.length === 0) return;
         completedFiles.forEach(f => {
-          const fileName = f.file.name.replace(/\.(png|jpe?g)$/i, '') + '_processed.jpg';
+          const fileName = f.file.name.replace(/\.(png|jpe?g|webp)$/i, '') + '_processed.jpg';
           if (f.convertedBlob) zip.file(fileName, f.convertedBlob);
         });
         const content = await zip.generateAsync({ type: "blob" });

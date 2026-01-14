@@ -7,8 +7,8 @@ BatchBox is a high-performance, browser-based toolset designed for professional 
 ## 🛠 Tools Suite
 
 ### 1. Image Converter
-*   **Batch Processing:** Convert large quantities of PNG/JPG images to optimized JPG format.
-*   **Transparency Handling:** Custom **Matte Color** backgrounds for transparent PNGs.
+*   **Batch Processing:** Convert large quantities of PNG/JPG/WebP images to optimized JPG format.
+*   **Transparency Handling:** Custom **Matte Color** backgrounds for transparent images (PNG/WebP).
 *   **Optimization:** Granular control over **Quality** and **Scale**.
 
 ### 2. Square Cropper (New)
@@ -21,6 +21,7 @@ BatchBox is a high-performance, browser-based toolset designed for professional 
 *   **Color Correction:** Integrated **Temperature** (Blue/Amber) and **Tint** (Magenta/Green) tuning to neutralize AI-generated color casts.
 *   **AB Comparison:** Real-time split-screen comparison against original or reference images.
 *   **Persistence:** Your curve settings and color tunings are automatically saved to local storage.
+*   **Memory Bank:** Save and load custom presets for recurring workflows.
 
 ### 4. Batch Zipper
 *   **Structure Preservation:** Drag & drop multiple folders; BatchBox zips them individually.
@@ -37,7 +38,7 @@ BatchBox is a high-performance, browser-based toolset designed for professional 
 
 ### Batch Curves Adjustment
 1. Select the **Batch Curves** tab.
-2. Drop your target images into the left manifest or main zone.
+2. Drop your target images (PNG, JPG, WebP) into the left manifest or main zone.
 3. Adjust the **Master Curve** by dragging points (double-click to delete).
 4. Use the **Color Tuning** sliders below the preview to fix red-tints or warmth.
 5. Toggle **AB Mode** to compare your changes against the original.

@@ -85,7 +85,8 @@ const Dropzone: React.FC<DropzoneProps> = ({
       let hasInvalid = false;
 
       files.forEach(file => {
-        if (file.type === 'image/png' || file.type === 'image/jpeg') {
+        const type = file.type;
+        if (type === 'image/png' || type === 'image/jpeg' || type === 'image/webp') {
           validFiles.push(file);
         } else {
           hasInvalid = true;
@@ -93,7 +94,7 @@ const Dropzone: React.FC<DropzoneProps> = ({
       });
 
       if (hasInvalid) {
-        setError('Only PNG and JPG files are supported.');
+        setError('Only PNG, JPG, and WebP files are supported.');
         setTimeout(() => setError(null), 3000);
       }
 
@@ -153,7 +154,7 @@ const Dropzone: React.FC<DropzoneProps> = ({
   };
 
   const title = mode === 'image' 
-    ? (compact ? 'ADD' : 'DROP PNG / JPG') 
+    ? (compact ? 'ADD' : 'DROP PNG / JPG / WEBP') 
     : (compact ? 'ADD' : 'DROP FOLDERS HERE');
     
   const subTitle = mode === 'image'
@@ -180,7 +181,7 @@ const Dropzone: React.FC<DropzoneProps> = ({
         <input
           type="file"
           multiple
-          {...(mode === 'folder' ? { webkitdirectory: "", directory: "" } as any : { accept: "image/png, image/jpeg" })}
+          {...(mode === 'folder' ? { webkitdirectory: "", directory: "" } as any : { accept: "image/png, image/jpeg, image/webp" })}
           onChange={handleFileInput}
           disabled={disabled || isScanning}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"

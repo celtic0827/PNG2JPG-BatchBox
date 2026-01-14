@@ -85,7 +85,7 @@ export const useImageConverter = () => {
       if (completedFiles.length === 0) return;
 
       completedFiles.forEach(f => {
-        const fileName = f.file.name.replace(/\.(png|jpe?g)$/i, '') + '.jpg';
+        const fileName = f.file.name.replace(/\.(png|jpe?g|webp)$/i, '') + '.jpg';
         if (f.convertedBlob) {
           zip.file(fileName, f.convertedBlob);
         }
