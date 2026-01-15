@@ -49,6 +49,7 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
   const [isResizingSplit, setIsResizingSplit] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
   const [showSaveInput, setShowSaveInput] = useState(false);
+  const [isSavingSingle, setIsSavingSingle] = useState(false);
 
   const completedCount = files.filter(f => f.status === ConversionStatus.COMPLETED).length;
 
@@ -140,6 +141,26 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
 
   const activeFileItem = files.find(f => f.id === activePreviewId);
 
+  const saveCurrentImage = async () => {
+    if (!activeFileItem) return;
+    setIsSavingSingle(true);
+    try {
+        const blob = await applyCurvesToImage(activeFileItem.file, lut, 0.9, colorTuning);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = activeFileItem.file.name.replace(/\.(png|jpe?g|webp)$/i, '') + '_adjusted.jpg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        console.error("Save failed", e);
+    } finally {
+        setIsSavingSingle(false);
+    }
+  };
+
   return (
     <main className="h-[660px] max-h-[660px] grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden">
       
@@ -230,6 +251,18 @@ const CurvesAdjustmentView: React.FC<CurvesAdjustmentViewProps> = ({ controller 
                     </button>
                   )}
                 </div>
+
+                <div className="h-3 w-px bg-cyber-border/50"></div>
+
+                <button
+                    onClick={saveCurrentImage}
+                    disabled={!activeFileItem || isSavingSingle}
+                    className="flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[8px] font-mono uppercase tracking-wider transition-all border border-cyber-border bg-cyber-panel text-cyber-dim hover:text-emerald-400 hover:border-emerald-500/50 disabled:opacity-50"
+                    title="Export current view as JPG"
+                >
+                    {isSavingSingle ? <RefreshCw size={9} className="animate-spin" /> : <Download size={9} />}
+                    Save View
+                </button>
               </div>
               <div className="text-[8px] font-mono text-cyber-dim uppercase tracking-widest">
                 {isABMode ? 'Comp Mode' : 'View Mode'}
