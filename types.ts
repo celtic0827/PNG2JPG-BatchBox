@@ -79,3 +79,14 @@ export interface CurvesConfig {
   points: CurvePoint[];
   channel: 'RGB' | 'R' | 'G' | 'B'; // Future proofing, currently focusing on Master (RGB)
 }
+
+export interface GridCropperConfig {
+  rows: number;
+  cols: number;
+  avatarWidth: number;
+  avatarHeight: number;
+  cropScale: number;
+  quality: number;
+  exportName: string;
+  startNumber: number;
+}

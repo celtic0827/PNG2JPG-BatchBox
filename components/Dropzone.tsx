@@ -6,13 +6,15 @@ interface DropzoneProps {
   disabled?: boolean;
   compact?: boolean;
   mode?: 'image' | 'folder'; // New prop to switch modes
+  multiple?: boolean;
 }
 
 const Dropzone: React.FC<DropzoneProps> = ({ 
   onFilesAdded, 
   disabled, 
   compact = false, 
-  mode = 'image' 
+  mode = 'image',
+  multiple = true
 }) => {
   const [isDragActive, setIsDragActive] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -180,7 +182,7 @@ const Dropzone: React.FC<DropzoneProps> = ({
       >
         <input
           type="file"
-          multiple
+          multiple={multiple}
           {...(mode === 'folder' ? { webkitdirectory: "", directory: "" } as any : { accept: "image/png, image/jpeg, image/webp" })}
           onChange={handleFileInput}
           disabled={disabled || isScanning}

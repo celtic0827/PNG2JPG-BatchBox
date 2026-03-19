@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, ShieldCheck, FolderArchive, Image as ImageIcon, Crop, Activity } from 'lucide-react';
+import { Package, ShieldCheck, FolderArchive, Image as ImageIcon, Crop, Activity, Grid } from 'lucide-react';
 import { useImageConverter } from './hooks/useImageConverter';
 import { useBatchZipper } from './hooks/useBatchZipper';
 import { useLayerCropper } from './hooks/useLayerCropper';
@@ -8,8 +8,10 @@ import ImageConverterView from './components/views/ImageConverterView';
 import BatchZipperView from './components/views/BatchZipperView';
 import LayerCropperView from './components/views/LayerCropperView';
 import CurvesAdjustmentView from './components/views/CurvesAdjustmentView';
+import GridCropperView from './components/views/GridCropperView';
+import { useGridCropper } from './hooks/useGridCropper';
 
-type ActiveTab = 'converter' | 'zipper' | 'cropper' | 'curves';
+type ActiveTab = 'converter' | 'zipper' | 'cropper' | 'curves' | 'grid';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
@@ -25,6 +27,7 @@ const App: React.FC = () => {
   const batchZipperController = useBatchZipper();
   const layerCropperController = useLayerCropper();
   const imageCurvesController = useImageCurves();
+  const gridCropperController = useGridCropper();
 
   return (
     <div className="min-h-screen w-full relative flex flex-col overflow-hidden">
@@ -95,6 +98,18 @@ const App: React.FC = () => {
           </button>
 
           <button 
+            onClick={() => setActiveTab('grid')}
+            className={`pb-1.5 px-1 flex items-center gap-1.5 font-mono text-[10px] tracking-wider transition-all relative ${
+              activeTab === 'grid' ? 'text-cyber-primary' : 'text-cyber-dim hover:text-cyber-text'
+            }`}
+          >
+            <Grid size={12} /> GRID CROP
+            {activeTab === 'grid' && (
+              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-cyber-primary shadow-[0_0_8px_rgba(6,182,212,0.5)]"></span>
+            )}
+          </button>
+
+          <button 
              onClick={() => setActiveTab('zipper')}
              className={`pb-1.5 px-1 flex items-center gap-1.5 font-mono text-[10px] tracking-wider transition-all relative ${
               activeTab === 'zipper' ? 'text-cyber-accent' : 'text-cyber-dim hover:text-cyber-text'
@@ -112,6 +127,7 @@ const App: React.FC = () => {
           {activeTab === 'converter' && <ImageConverterView controller={imageConverterController} />}
           {activeTab === 'cropper' && <LayerCropperView controller={layerCropperController} />}
           {activeTab === 'curves' && <CurvesAdjustmentView controller={imageCurvesController} />}
+          {activeTab === 'grid' && <GridCropperView controller={gridCropperController} />}
           {activeTab === 'zipper' && <BatchZipperView controller={batchZipperController} />}
         </div>
 

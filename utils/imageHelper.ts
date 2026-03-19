@@ -163,6 +163,75 @@ export const applyCurvesToImage = async (
   });
 };
 
+/**
+ * Crops an image into a grid of avatars based on central anchor points.
+ */
+export const cropImageToGrid = async (
+  file: File,
+  rows: number,
+  cols: number,
+  avatarWidth: number,
+  avatarHeight: number,
+  cropScale: number = 1.0,
+  quality: number = 0.9
+): Promise<Blob[]> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const blobs: Promise<Blob>[] = [];
+      const cw = img.width / cols;
+      const ch = img.height / rows;
+
+      // Calculate the base crop size that fits within the grid cell while maintaining aspect ratio
+      const aspect = avatarWidth / avatarHeight;
+      const baseCropW = Math.min(cw, ch * aspect);
+      const baseCropH = Math.min(ch, cw / aspect);
+
+      // Apply cropScale (1.0 = fits grid cell, < 1.0 = zoom in, > 1.0 = zoom out)
+      const sourceCropW = baseCropW * cropScale;
+      const sourceCropH = baseCropH * cropScale;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const centerX = (c + 0.5) * cw;
+          const centerY = (r + 0.5) * ch;
+
+          const startX = centerX - sourceCropW / 2;
+          const startY = centerY - sourceCropH / 2;
+
+          const canvas = document.createElement('canvas');
+          canvas.width = avatarWidth;
+          canvas.height = avatarHeight;
+          const ctx = canvas.getContext('2d');
+
+          if (!ctx) continue;
+
+          // Fill background in case crop goes out of bounds
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, avatarWidth, avatarHeight);
+
+          ctx.drawImage(
+            img,
+            startX, startY, sourceCropW, sourceCropH,
+            0, 0, avatarWidth, avatarHeight
+          );
+
+          blobs.push(new Promise((res, rej) => {
+            canvas.toBlob((b) => {
+              if (b) res(b);
+              else rej(new Error('Crop failed'));
+            }, 'image/jpeg', quality);
+          }));
+        }
+      }
+
+      Promise.all(blobs).then(resolve).catch(reject);
+    };
+    img.onerror = (err) => reject(err);
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 export const formatBytes = (bytes: number, decimals = 2) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
