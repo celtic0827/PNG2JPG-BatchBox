@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { ImageFile, ConversionStatus, ConversionConfig } from '../types';
 import { convertImageToJpg, getImageDimensions } from '../utils/imageHelper';
 import { generateId, getZip } from '../utils/common';
@@ -6,12 +6,24 @@ import { generateId, getZip } from '../utils/common';
 export const useImageConverter = () => {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [config, setConfig] = useState<ConversionConfig>({
-    quality: 0.9,
-    fillColor: '#FFFFFF',
-    scale: 1,
+  const [config, setConfig] = useState<ConversionConfig>(() => {
+    const saved = localStorage.getItem('batchbox_converter_config');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {
+      quality: 0.9,
+      fillColor: '#FFFFFF',
+      scale: 1,
+    };
   });
   const [processedCount, setProcessedCount] = useState(0);
+
+  useEffect(() => {
+    localStorage.setItem('batchbox_converter_config', JSON.stringify(config));
+  }, [config]);
 
   const handleFilesAdded = useCallback(async (newFiles: File[]) => {
     const processedFilesPromises = newFiles.map(async (file) => {
@@ -28,7 +40,17 @@ export const useImageConverter = () => {
     });
 
     const newImageFiles = await Promise.all(processedFilesPromises);
-    setFiles(prev => [...prev, ...newImageFiles]);
+    setFiles(prev => {
+      const updated = [...prev, ...newImageFiles];
+      if (prev.length === 0 && updated.length > 0) {
+        setConfig(c => ({
+          ...c,
+          targetWidth: updated[0].width,
+          targetHeight: updated[0].height
+        }));
+      }
+      return updated;
+    });
   }, []);
 
   const handleRemoveFile = useCallback((id: string) => {
@@ -45,6 +67,7 @@ export const useImageConverter = () => {
     files.forEach(f => URL.revokeObjectURL(f.previewUrl));
     setFiles([]);
     setProcessedCount(0);
+    setConfig(c => ({ ...c, scale: 1, targetWidth: undefined, targetHeight: undefined }));
   }, [files]);
 
   const startConversion = async () => {

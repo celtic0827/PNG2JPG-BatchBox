@@ -117,19 +117,79 @@ const ImageConverterView: React.FC<ImageConverterViewProps> = ({ controller }) =
                 <label className="text-[9px] font-bold text-cyber-dim uppercase tracking-widest flex items-center gap-1.5">
                    <Minimize2 size={10} /> Resize
                 </label>
-                <span className="text-[9px] font-mono text-cyber-accent bg-cyber-accent/10 px-1.5 py-0.5 rounded">
-                  {Math.round(config.scale * 100)}%
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-[9px] font-mono text-cyber-accent bg-cyber-accent/10 px-1.5 py-0.5 rounded">
+                    {Math.round(config.scale * 100)}%
+                  </span>
+                </div>
               </div>
-              <div className="relative w-full h-2.5 bg-cyber-black rounded-sm overflow-hidden border border-cyber-border shadow-inner">
+              <div className="relative w-full h-2.5 bg-cyber-black rounded-sm overflow-hidden border border-cyber-border shadow-inner mb-3">
                 <div className="absolute h-full bg-gradient-to-r from-cyber-accent/50 to-cyber-accent" style={{width: `${config.scale * 100}%`}} />
                 <input 
                   type="range" min="1" max="100" step="1"
                   value={config.scale * 100}
-                  onChange={(e) => setConfig({...config, scale: Number(e.target.value) / 100})}
+                  onChange={(e) => {
+                    const s = Number(e.target.value) / 100;
+                    const newConfig = { ...config, scale: s };
+                    if (files.length > 0 && files[0].width && files[0].height) {
+                      newConfig.targetWidth = Math.round(files[0].width * s);
+                      newConfig.targetHeight = Math.round(files[0].height * s);
+                    }
+                    setConfig(newConfig);
+                  }}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   disabled={isProcessing}
                 />
+              </div>
+
+              {/* Specific Dimensions */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[8px] font-mono text-cyber-dim uppercase">Width</label>
+                  <input 
+                    type="number" 
+                    value={config.targetWidth || ''} 
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (isNaN(val)) {
+                        setConfig({ ...config, targetWidth: undefined, targetHeight: undefined });
+                        return;
+                      }
+                      const newConfig = { ...config, targetWidth: val };
+                      if (files.length > 0 && files[0].width && files[0].height) {
+                        newConfig.targetHeight = Math.round((files[0].height / files[0].width) * val);
+                        newConfig.scale = val / files[0].width;
+                      }
+                      setConfig(newConfig);
+                    }}
+                    className="w-full bg-cyber-black border border-cyber-border text-[10px] font-mono p-1.5 text-cyber-text outline-none focus:border-cyber-accent"
+                    placeholder="px"
+                    disabled={isProcessing}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[8px] font-mono text-cyber-dim uppercase">Height</label>
+                  <input 
+                    type="number" 
+                    value={config.targetHeight || ''} 
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (isNaN(val)) {
+                        setConfig({ ...config, targetWidth: undefined, targetHeight: undefined });
+                        return;
+                      }
+                      const newConfig = { ...config, targetHeight: val };
+                      if (files.length > 0 && files[0].width && files[0].height) {
+                        newConfig.targetWidth = Math.round((files[0].width / files[0].height) * val);
+                        newConfig.scale = val / files[0].height;
+                      }
+                      setConfig(newConfig);
+                    }}
+                    className="w-full bg-cyber-black border border-cyber-border text-[10px] font-mono p-1.5 text-cyber-text outline-none focus:border-cyber-accent"
+                    placeholder="px"
+                    disabled={isProcessing}
+                  />
+                </div>
               </div>
             </div>
 

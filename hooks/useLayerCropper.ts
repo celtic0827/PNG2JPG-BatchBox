@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { LayerImage, CropperConfig } from '../types';
 import { generateId, getZip } from '../utils/common';
 import { getImageDimensions } from '../utils/imageHelper';
@@ -10,12 +10,24 @@ export const WORKSPACE_PREVIEW_SIZE = 400;
 export const useLayerCropper = () => {
   const [layers, setLayers] = useState<LayerImage[]>([]);
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
-  const [config, setConfig] = useState<CropperConfig>({
-    outputSize: 1024,
-    quality: 0.9,
-    fillColor: '#000000',
+  const [config, setConfig] = useState<CropperConfig>(() => {
+    const saved = localStorage.getItem('batchbox_cropper_config');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {
+      outputSize: 1024,
+      quality: 0.9,
+      fillColor: '#000000',
+    };
   });
   const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('batchbox_cropper_config', JSON.stringify(config));
+  }, [config]);
 
   const activeLayer = layers.find(l => l.id === activeLayerId) || null;
 

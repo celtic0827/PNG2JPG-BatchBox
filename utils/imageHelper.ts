@@ -31,9 +31,25 @@ export const convertImageToJpg = async (
       const img = new Image();
       
       img.onload = () => {
-        const scale = config.scale || 1;
-        const targetWidth = Math.max(1, Math.floor(img.width * scale));
-        const targetHeight = Math.max(1, Math.floor(img.height * scale));
+        let targetWidth = 0;
+        let targetHeight = 0;
+
+        if (config.targetWidth || config.targetHeight) {
+          if (config.targetWidth && config.targetHeight) {
+            targetWidth = config.targetWidth;
+            targetHeight = config.targetHeight;
+          } else if (config.targetWidth) {
+            targetWidth = config.targetWidth;
+            targetHeight = Math.round((img.height / img.width) * targetWidth);
+          } else if (config.targetHeight) {
+            targetHeight = config.targetHeight;
+            targetWidth = Math.round((img.width / img.height) * targetHeight);
+          }
+        } else {
+          const scale = config.scale || 1;
+          targetWidth = Math.max(1, Math.floor(img.width * scale));
+          targetHeight = Math.max(1, Math.floor(img.height * scale));
+        }
 
         const canvas = document.createElement('canvas');
         canvas.width = targetWidth;

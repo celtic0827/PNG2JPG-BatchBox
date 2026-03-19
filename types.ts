@@ -46,6 +46,8 @@ export interface ConversionConfig {
   quality: number; // 0.1 to 1.0
   fillColor: string; // Background color for transparency replacement
   scale: number; // 0.01 to 1.0 (Resize percentage)
+  targetWidth?: number;
+  targetHeight?: number;
 }
 
 export interface CropperConfig {

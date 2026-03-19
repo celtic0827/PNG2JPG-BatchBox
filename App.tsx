@@ -12,8 +12,15 @@ import CurvesAdjustmentView from './components/views/CurvesAdjustmentView';
 type ActiveTab = 'converter' | 'zipper' | 'cropper' | 'curves';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('curves'); 
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    const saved = localStorage.getItem('batchbox_active_tab');
+    return (saved as ActiveTab) || 'curves';
+  }); 
   
+  React.useEffect(() => {
+    localStorage.setItem('batchbox_active_tab', activeTab);
+  }, [activeTab]);
+
   const imageConverterController = useImageConverter();
   const batchZipperController = useBatchZipper();
   const layerCropperController = useLayerCropper();
