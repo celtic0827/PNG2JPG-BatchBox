@@ -17,6 +17,7 @@ export const useImageConverter = () => {
       quality: 0.9,
       fillColor: '#FFFFFF',
       scale: 1,
+      filenameSuffix: '',
     };
   });
   const [processedCount, setProcessedCount] = useState(0);
@@ -67,7 +68,7 @@ export const useImageConverter = () => {
     files.forEach(f => URL.revokeObjectURL(f.previewUrl));
     setFiles([]);
     setProcessedCount(0);
-    setConfig(c => ({ ...c, scale: 1, targetWidth: undefined, targetHeight: undefined }));
+    setConfig(c => ({ ...c, scale: 1, targetWidth: undefined, targetHeight: undefined, filenameSuffix: '' }));
   }, [files]);
 
   const startConversion = async () => {
@@ -108,7 +109,8 @@ export const useImageConverter = () => {
       if (completedFiles.length === 0) return;
 
       completedFiles.forEach(f => {
-        const fileName = f.file.name.replace(/\.(png|jpe?g|webp)$/i, '') + '.jpg';
+        const suffix = config.filenameSuffix || '';
+        const fileName = f.file.name.replace(/\.(png|jpe?g|webp)$/i, '') + suffix + '.jpg';
         if (f.convertedBlob) {
           zip.file(fileName, f.convertedBlob);
         }

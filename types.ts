@@ -48,6 +48,7 @@ export interface ConversionConfig {
   scale: number; // 0.01 to 1.0 (Resize percentage)
   targetWidth?: number;
   targetHeight?: number;
+  filenameSuffix?: string;
 }
 
 export interface CropperConfig {

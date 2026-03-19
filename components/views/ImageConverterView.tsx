@@ -193,6 +193,29 @@ const ImageConverterView: React.FC<ImageConverterViewProps> = ({ controller }) =
               </div>
             </div>
 
+            {/* Filename Suffix */}
+            <div>
+              <label className="block text-[9px] font-bold text-cyber-dim mb-2 uppercase tracking-widest flex items-center gap-1.5">
+                Suffix
+              </label>
+              <div className="relative group">
+                <input 
+                  type="text" 
+                  value={config.filenameSuffix || ''} 
+                  onChange={(e) => setConfig({...config, filenameSuffix: e.target.value})}
+                  className="w-full bg-cyber-black border border-cyber-border text-[10px] font-mono p-2 text-cyber-text outline-none focus:border-cyber-primary transition-colors pr-12"
+                  placeholder="e.g. _1280"
+                  disabled={isProcessing}
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[8px] font-mono text-cyber-dim/50 pointer-events-none">
+                  .jpg
+                </div>
+              </div>
+              <p className="mt-1.5 text-[8px] text-cyber-dim/60 font-mono italic">
+                Appended to all output filenames
+              </p>
+            </div>
+
             {/* Color */}
             <div>
               <label className="block text-[9px] font-bold text-cyber-dim mb-2 uppercase tracking-widest">Matte</label>
