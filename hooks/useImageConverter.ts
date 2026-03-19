@@ -7,18 +7,20 @@ export const useImageConverter = () => {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [config, setConfig] = useState<ConversionConfig>(() => {
-    const saved = localStorage.getItem('batchbox_converter_config');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return {
+    const defaultConfig: ConversionConfig = {
       quality: 0.9,
       fillColor: '#FFFFFF',
       scale: 1,
       filenameSuffix: '',
+      lockAspectRatio: true,
     };
+    const saved = localStorage.getItem('batchbox_converter_config');
+    if (saved) {
+      try {
+        return { ...defaultConfig, ...JSON.parse(saved) };
+      } catch (e) {}
+    }
+    return defaultConfig;
   });
   const [processedCount, setProcessedCount] = useState(0);
 
@@ -47,7 +49,8 @@ export const useImageConverter = () => {
         setConfig(c => ({
           ...c,
           targetWidth: updated[0].width,
-          targetHeight: updated[0].height
+          targetHeight: updated[0].height,
+          lockAspectRatio: true
         }));
       }
       return updated;
@@ -68,7 +71,7 @@ export const useImageConverter = () => {
     files.forEach(f => URL.revokeObjectURL(f.previewUrl));
     setFiles([]);
     setProcessedCount(0);
-    setConfig(c => ({ ...c, scale: 1, targetWidth: undefined, targetHeight: undefined, filenameSuffix: '' }));
+    setConfig(c => ({ ...c, scale: 1, targetWidth: undefined, targetHeight: undefined, filenameSuffix: '', lockAspectRatio: true }));
   }, [files]);
 
   const startConversion = async () => {

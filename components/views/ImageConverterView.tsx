@@ -117,7 +117,19 @@ const ImageConverterView: React.FC<ImageConverterViewProps> = ({ controller }) =
                 <label className="text-[9px] font-bold text-cyber-dim uppercase tracking-widest flex items-center gap-1.5">
                    <Minimize2 size={10} /> Resize
                 </label>
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 cursor-pointer group/lock">
+                    <input 
+                      type="checkbox"
+                      checked={config.lockAspectRatio}
+                      onChange={(e) => setConfig({ ...config, lockAspectRatio: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div className={`w-3 h-3 border border-cyber-border rounded-sm flex items-center justify-center transition-colors ${config.lockAspectRatio ? 'bg-cyber-primary border-cyber-primary' : 'bg-cyber-black'}`}>
+                      {config.lockAspectRatio && <div className="w-1.5 h-1.5 bg-cyber-black rounded-full" />}
+                    </div>
+                    <span className="text-[8px] font-mono text-cyber-dim group-hover/lock:text-cyber-primary transition-colors uppercase">Lock</span>
+                  </label>
                   <span className="text-[9px] font-mono text-cyber-accent bg-cyber-accent/10 px-1.5 py-0.5 rounded">
                     {Math.round(config.scale * 100)}%
                   </span>
@@ -157,7 +169,9 @@ const ImageConverterView: React.FC<ImageConverterViewProps> = ({ controller }) =
                       }
                       const newConfig = { ...config, targetWidth: val };
                       if (files.length > 0 && files[0].width && files[0].height) {
-                        newConfig.targetHeight = Math.round((files[0].height / files[0].width) * val);
+                        if (config.lockAspectRatio) {
+                          newConfig.targetHeight = Math.round((files[0].height / files[0].width) * val);
+                        }
                         newConfig.scale = val / files[0].width;
                       }
                       setConfig(newConfig);
@@ -180,7 +194,9 @@ const ImageConverterView: React.FC<ImageConverterViewProps> = ({ controller }) =
                       }
                       const newConfig = { ...config, targetHeight: val };
                       if (files.length > 0 && files[0].width && files[0].height) {
-                        newConfig.targetWidth = Math.round((files[0].width / files[0].height) * val);
+                        if (config.lockAspectRatio) {
+                          newConfig.targetWidth = Math.round((files[0].width / files[0].height) * val);
+                        }
                         newConfig.scale = val / files[0].height;
                       }
                       setConfig(newConfig);

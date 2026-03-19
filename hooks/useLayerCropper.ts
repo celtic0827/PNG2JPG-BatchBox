@@ -11,17 +11,18 @@ export const useLayerCropper = () => {
   const [layers, setLayers] = useState<LayerImage[]>([]);
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
   const [config, setConfig] = useState<CropperConfig>(() => {
-    const saved = localStorage.getItem('batchbox_cropper_config');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return {
+    const defaultConfig: CropperConfig = {
       outputSize: 1024,
       quality: 0.9,
       fillColor: '#000000',
     };
+    const saved = localStorage.getItem('batchbox_cropper_config');
+    if (saved) {
+      try {
+        return { ...defaultConfig, ...JSON.parse(saved) };
+      } catch (e) {}
+    }
+    return defaultConfig;
   });
   const [isExporting, setIsExporting] = useState(false);
 

@@ -49,6 +49,7 @@ export interface ConversionConfig {
   targetWidth?: number;
   targetHeight?: number;
   filenameSuffix?: string;
+  lockAspectRatio?: boolean;
 }
 
 export interface CropperConfig {
