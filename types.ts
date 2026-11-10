@@ -53,7 +53,9 @@ export interface ConversionConfig {
 }
 
 export interface CropperConfig {
-  outputSize: number; // e.g., 1024
+  outputWidth: number; // e.g., 1024
+  outputHeight: number; // e.g., 1024
+  lockRatio: boolean;
   quality: number;
   fillColor: string;
 }
@@ -86,6 +88,7 @@ export interface GridCropperConfig {
   avatarWidth: number;
   avatarHeight: number;
   cropScale: number;
+  offsetY: number; // Vertical offset percentage (-100 to 100)
   quality: number;
   exportName: string;
   startNumber: number;

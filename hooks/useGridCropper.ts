@@ -17,6 +17,7 @@ export const useGridCropper = () => {
       avatarWidth: 512,
       avatarHeight: 512,
       cropScale: 1.0,
+      offsetY: 0,
       quality: 0.9,
       exportName: 'avatar',
       startNumber: 1,
@@ -89,6 +90,7 @@ export const useGridCropper = () => {
           config.avatarWidth,
           config.avatarHeight,
           config.cropScale,
+          config.offsetY,
           config.quality
         );
 

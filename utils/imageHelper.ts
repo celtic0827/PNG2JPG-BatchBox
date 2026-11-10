@@ -173,6 +173,7 @@ export const cropImageToGrid = async (
   avatarWidth: number,
   avatarHeight: number,
   cropScale: number = 1.0,
+  offsetY: number = 0, // Vertical offset percentage (-100 to 100)
   quality: number = 0.9
 ): Promise<Blob[]> => {
   return new Promise((resolve, reject) => {
@@ -194,7 +195,8 @@ export const cropImageToGrid = async (
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           const centerX = (c + 0.5) * cw;
-          const centerY = (r + 0.5) * ch;
+          // Apply vertical offset relative to cell height
+          const centerY = (r + 0.5) * ch + (offsetY / 100) * ch;
 
           const startX = centerX - sourceCropW / 2;
           const startY = centerY - sourceCropH / 2;

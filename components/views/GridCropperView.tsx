@@ -116,7 +116,8 @@ const GridCropperView: React.FC<GridCropperViewProps> = ({ controller }) => {
                       {Array.from({ length: safeRows }).map((_, r) => (
                         Array.from({ length: safeCols }).map((_, c) => {
                           const centerX = (c + 0.5) * (100 / safeCols);
-                          const centerY = (r + 0.5) * (100 / safeRows);
+                          // Apply vertical offset in preview
+                          const centerY = (r + 0.5) * (100 / safeRows) + config.offsetY * (100 / safeRows) / 100;
                           
                           // Calculate display size based on image display dimensions
                           // This is a bit tricky because of object-contain, but we can use CSS percentages for the grid lines
@@ -162,7 +163,7 @@ const GridCropperView: React.FC<GridCropperViewProps> = ({ controller }) => {
                 <div className="flex items-center gap-4">
                   <span>GRID: <span className="text-cyber-primary">{config.cols}x{config.rows}</span></span>
                   <span className="w-px h-3 bg-cyber-border"></span>
-                  <span>OUTPUT: <span className="text-cyber-accent">{config.avatarWidth}x{config.avatarHeight}px</span></span>
+                  <span>OFFSET Y: <span className="text-cyber-accent">{config.offsetY}%</span></span>
                 </div>
                 <span className="text-cyber-dim/60 italic uppercase tracking-tighter">Central Anchor Point Calculation Active</span>
               </div>
@@ -256,7 +257,31 @@ const GridCropperView: React.FC<GridCropperViewProps> = ({ controller }) => {
                   disabled={isProcessing}
                 />
               </div>
-              <p className="text-[8px] text-cyber-dim/60 font-mono italic">Adjust the size of the crop area within the grid cell.</p>
+            </div>
+
+            {/* Vertical Offset */}
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <label className="text-[9px] font-bold text-cyber-dim uppercase tracking-widest flex items-center gap-1.5">
+                  <Maximize2 size={10} /> Vertical Offset
+                </label>
+                <span className="text-[9px] font-mono text-cyber-accent">{config.offsetY}%</span>
+              </div>
+              <div className="relative w-full h-2.5 bg-cyber-black rounded-sm overflow-hidden border border-cyber-border shadow-inner">
+                <div className="absolute h-full bg-gradient-to-r from-cyber-accent/30 to-cyber-accent/60" style={{
+                  left: config.offsetY < 0 ? `${50 + config.offsetY / 2}%` : '50%',
+                  width: `${Math.abs(config.offsetY / 2)}%`
+                }} />
+                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-cyber-border/50 z-0"></div>
+                <input 
+                  type="range" min="-100" max="100" step="1"
+                  value={config.offsetY}
+                  onChange={(e) => setConfig({...config, offsetY: parseInt(e.target.value)})}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  disabled={isProcessing}
+                />
+              </div>
+              <p className="text-[8px] text-cyber-dim/60 font-mono italic">Shift the crop area up or down within the grid cell.</p>
             </div>
 
             {/* Export Settings */}

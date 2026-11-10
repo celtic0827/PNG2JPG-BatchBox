@@ -4,22 +4,33 @@ import { LayerImage, CropperConfig } from '../types';
 import { generateId, getZip } from '../utils/common';
 import { getImageDimensions } from '../utils/imageHelper';
 
-// Define a constant for the preview area size to ensure consistency between UI and Export
-export const WORKSPACE_PREVIEW_SIZE = 400;
+// Define a base box boundary for the preview area
+export const WORKSPACE_PREVIEW_MAX_SIZE = 400;
 
 export const useLayerCropper = () => {
   const [layers, setLayers] = useState<LayerImage[]>([]);
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
   const [config, setConfig] = useState<CropperConfig>(() => {
     const defaultConfig: CropperConfig = {
-      outputSize: 1024,
+      outputWidth: 1024,
+      outputHeight: 1024,
+      lockRatio: true,
       quality: 0.9,
       fillColor: '#000000',
     };
     const saved = localStorage.getItem('batchbox_cropper_config');
     if (saved) {
       try {
-        return { ...defaultConfig, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        // Handle migration from previous outputSize
+        const outputWidth = parsed.outputWidth || parsed.outputSize || 1024;
+        const outputHeight = parsed.outputHeight || parsed.outputSize || 1024;
+        return { 
+          ...defaultConfig, 
+          ...parsed,
+          outputWidth,
+          outputHeight
+        };
       } catch (e) {}
     }
     return defaultConfig;
@@ -30,14 +41,29 @@ export const useLayerCropper = () => {
     localStorage.setItem('batchbox_cropper_config', JSON.stringify(config));
   }, [config]);
 
+  // Compute preview dimensions fitting within WORKSPACE_PREVIEW_MAX_SIZE
+  const { previewWidth, previewHeight } = (() => {
+    const w = Math.max(1, config.outputWidth || 1024);
+    const h = Math.max(1, config.outputHeight || 1024);
+    if (w >= h) {
+      const pw = WORKSPACE_PREVIEW_MAX_SIZE;
+      const ph = Math.round((h / w) * WORKSPACE_PREVIEW_MAX_SIZE);
+      return { previewWidth: pw, previewHeight: ph };
+    } else {
+      const ph = WORKSPACE_PREVIEW_MAX_SIZE;
+      const pw = Math.round((w / h) * WORKSPACE_PREVIEW_MAX_SIZE);
+      return { previewWidth: pw, previewHeight: ph };
+    }
+  })();
+
   const activeLayer = layers.find(l => l.id === activeLayerId) || null;
 
   const handleFilesAdded = useCallback(async (files: File[]) => {
     const newLayersPromises = files.map(async (file) => {
       const { width, height } = await getImageDimensions(file);
       
-      // Default: Scale to cover the preview square (WORKSPACE_PREVIEW_SIZE)
-      const initialScale = WORKSPACE_PREVIEW_SIZE / Math.min(width, height);
+      // Default: Scale to cover the preview area
+      const initialScale = Math.max(previewWidth / width, previewHeight / height);
       
       return {
         id: generateId(),
@@ -58,7 +84,7 @@ export const useLayerCropper = () => {
     if (!activeLayerId && newLayers.length > 0) {
       setActiveLayerId(newLayers[0].id);
     }
-  }, [activeLayerId]);
+  }, [activeLayerId, previewWidth, previewHeight]);
 
   const updateActiveLayer = useCallback((updates: Partial<LayerImage>) => {
     if (!activeLayerId) return;
@@ -81,13 +107,19 @@ export const useLayerCropper = () => {
     
     try {
       const zip = getZip();
+      const targetWidth = Math.max(1, config.outputWidth || 1024);
+      const targetHeight = Math.max(1, config.outputHeight || 1024);
+
       const canvas = document.createElement('canvas');
-      canvas.width = config.outputSize;
-      canvas.height = config.outputSize;
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
       const ctx = canvas.getContext('2d')!;
 
-      // Calculate the ratio between actual export size and UI preview size
-      const multiplier = config.outputSize / WORKSPACE_PREVIEW_SIZE;
+      // Calculate multiplier from preview size to target size
+      const multiplierX = targetWidth / previewWidth;
+      const multiplierY = targetHeight / previewHeight;
+      // Since preview maintains aspect ratio with targetWidth/targetHeight, multiplierX === multiplierY
+      const multiplier = multiplierX;
 
       for (const layer of layers) {
         // Reset canvas for each image
@@ -104,7 +136,7 @@ export const useLayerCropper = () => {
         // Move to the center of the export canvas
         ctx.translate(canvas.width / 2, canvas.height / 2);
         
-        // Scale everything by the multiplier
+        // Scale coordinates & dimensions by multiplier
         const exportScale = layer.scale * multiplier;
         const exportX = layer.x * multiplier;
         const exportY = layer.y * multiplier;
@@ -124,7 +156,7 @@ export const useLayerCropper = () => {
 
         const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', config.quality));
         if (blob) {
-          zip.file(`${layer.file.name.replace(/\.[^/.]+$/, "")}_square.jpg`, blob);
+          zip.file(`${layer.file.name.replace(/\.[^/.]+$/, "")}_${targetWidth}x${targetHeight}.jpg`, blob);
         }
       }
 
@@ -132,7 +164,7 @@ export const useLayerCropper = () => {
       const url = URL.createObjectURL(content);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `BatchBox_Square_Layers_${new Date().toISOString().slice(0,10)}.zip`;
+      a.download = `BatchBox_Cropped_${targetWidth}x${targetHeight}_${new Date().toISOString().slice(0,10)}.zip`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -149,6 +181,8 @@ export const useLayerCropper = () => {
     setActiveLayerId,
     config,
     setConfig,
+    previewWidth,
+    previewHeight,
     handleFilesAdded,
     updateActiveLayer,
     removeLayer,
